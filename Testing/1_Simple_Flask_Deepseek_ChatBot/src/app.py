@@ -113,13 +113,19 @@ def getLastRst():
             }
         
         try:
-            response = requests.post(ollama_url, json=data, stream=True)
+            response = requests.post(ollama_url, json=data, stream=False)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             print('Error:%s' %str(e))
             return Response(f"Error connecting to Ollama: {str(e)}", status=500)
-
-    return jsonify({"respose": str(response.content)})
+    dataString = None
+    if response:
+        dataString = ''
+        for line in response.iter_lines():
+            if line: 
+                json_chunk = json.loads(line.decode('utf-8'))
+                dataString += json_chunk.get('response', '')
+    return jsonify({"respose": str(dataString)})
 
 #-----------------------------------------------------------------------------
 #-----------------------------------------------------------------------------
