@@ -16,7 +16,7 @@
 import json
 import requests
 from collections import OrderedDict
-from flask import Flask, render_template, request, Response
+from flask import Flask, render_template, request, jsonify, Response
 
 # Config flask parameters here
 gFlaskHost = '0.0.0.0'
@@ -88,6 +88,38 @@ def chat():
                     continue
 
     return Response(generate(), mimetype='text/plain')
+
+
+
+#-----------------------------------------------------------------------------
+@app.route('/getResp', methods=['GET', ])
+def getLastRst():
+    """ Api to get the question answer
+        requests.get(http://%s:%s/getLastRst, json={'model':<modelname>, 'message':<user_message>})
+    """
+    content = request.json
+    response = None 
+    if content:
+        content = dict(content)
+        model = str(content['model'])
+        message = str(content['message'])
+        if model in OllamaHosts.keys():
+            ollama_url = 'http://%s:11434/api/generate' % OllamaHosts[model]['ip']
+
+            data = {
+                'model': OllamaHosts[model]['model'],
+                'prompt': message,
+                'stream': False
+            }
+        
+        try:
+            response = requests.post(ollama_url, json=data, stream=True)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print('Error:%s' %str(e))
+            return Response(f"Error connecting to Ollama: {str(e)}", status=500)
+
+    return jsonify({"respose": str(response.content)})
 
 #-----------------------------------------------------------------------------
 #-----------------------------------------------------------------------------

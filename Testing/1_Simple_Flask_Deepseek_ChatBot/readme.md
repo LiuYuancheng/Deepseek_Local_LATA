@@ -31,7 +31,7 @@ The user can select the models in the navigation bar's drop down menu.
 
 ------
 
-### System Design
+### Program Design
 
 The test program is use the Ollama API designed for below scenarios:
 
@@ -57,3 +57,72 @@ You have Multiple GPU servers in a subnet and running different LLM models such 
 
  
 
+------
+
+### Program Setup
+
+**Development Environment** : python 3.7.4rc2+ 64bit [ Windows11 ]
+
+**Additional Lib/Software Need** 
+
+| Lib Module   | Version | Installation                              | Lib link                        |
+| ------------ | ------- | ----------------------------------------- | ------------------------------- |
+| **Flask**    | 1.1.2   | `pip install Flask`                       | https://pypi.org/project/Flask/ |
+| **requests** | 2.28.1  | `pip install requestspip install requests |                                 |
+
+**Program Source File List** 
+
+| Program File               | Execution Env | Module Description                  |
+| -------------------------- | ------------- | ----------------------------------- |
+| `src/app.py`               | python 3      | Main web host program               |
+| `src/templates/index.html` | html          | Main chat bot web page              |
+| `src/static/script.js`     | JavaScript    | JS to update the conversation area. |
+| `src/static/style.css`     | CSS           | css file.                           |
+
+
+
+------
+
+### Program Usage
+
+**Step-1 : Add the LLM Ollama server in the program** 
+
+Open the host program `app.py`, append the server IP and the model name with a unique IP as shown below:
+
+```
+OllamaHosts[<unique_ID>] = {'ip': <host IP address>, 'model': <llm model name>}
+```
+
+![](doc/img/s_07.png)
+
+
+
+**Step_2 : Run the chat bot host**  
+
+Run the chat bot host program with command : `python app.py`
+
+Open the web chat bot with URL  http://127.0.0.1:5000/ , select the mode you want to connect in the drop down menu:
+
+![](doc/img/s_08.png)
+
+**Step-3 : Test web chat bot and API Call** 
+
+Send the question from the chat:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------
+
+> 
