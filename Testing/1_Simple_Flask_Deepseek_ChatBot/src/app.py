@@ -28,7 +28,7 @@ gFlaskMultiTH = False
 OllamaHosts = OrderedDict()
 # Add your new host ip and model here
 OllamaHosts['localhost-DS1.5b'] = {'ip': 'localhost', 'model': 'deepseek-r1:1.5b'}
-OllamaHosts['RTX3060-DS7b'] = {'ip': '172.26.190.53', 'model': 'deepseek-r1:7b'}
+OllamaHosts['RTX3060-DS7b'] = {'ip': '192.168.50.141', 'model': 'deepseek-r1:7b'}
 
 selectModel = "localhost-DS1.5b"
 
