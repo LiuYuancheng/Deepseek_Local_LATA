@@ -1,6 +1,11 @@
 # Flask Local Deep Seek Chat Bot Test App
 
-**Project Design Purpose**:  We want to create a simple flask App Chat Bot  which can link to multiple local GPU servers ( in one subnet) which running different version of deep seek and test and compare the response of different version of LLM model.
+**Project Design Purpose** : The Flask Local Deep Seek Chat Bot Test App is designed to create a simple python-flask-based chatbot that can connect to multiple local GPU servers within the same subnet for filling below four requirements :
+
+- Connect multiple local GPU servers running different DeepSeek LLM versions within a subnet.
+- Enable remote testing and performance comparison of LLM responses.
+- Provide controlled access to specialized/fine-tuned models without exposing server credentials.
+- Facilitate prompt engineering by modifying user queries before model submission.
 
 ```
 # Created:     2025/02/23
@@ -9,23 +14,31 @@
 # License:     MIT License
 ```
 
+**Table of Contents**
+
 [TOC]
+
+- [Flask Local Deep Seek Chat Bot Test App](#flask-local-deep-seek-chat-bot-test-app)
+    + [Introduction](#introduction)
+    + [Program Design](#program-design)
+    + [Program Setup](#program-setup)
+    + [Program Usage](#program-usage)
 
 ------
 
 ### Introduction
 
-The Flask Local Deep Seek Chat Bot Test App is a simple test program which provide the selection function for use to remote access (as questions) to multiple LLM models running on different GPU with the Ollama host. The programming can be used for: 
+This application provides a user-friendly interface for remote access to multiple LLM models running on different GPUs ( using the Ollama host the model). The chatbot is designed for the following purposes:
 
-- Test whether a GPU host Ollama LLM works.
-- Share the special LLM (finetuned or RAG embedded) to others to let them remote use (Ask questions )
-- Compare the performance of different LLM's response of one question such as deepseekR1-1.5b, DeepseekR1-7b. 
+- Testing the functionality of GPU-hosted Ollama LLM instances.
+- Allowing shared access to specialized LLMs (fine-tuned or RAG embedded) without requiring direct SSH access.
+- Comparing the performance of different LLM models, such as DeepSeek R1-1.5B and DeepSeek R1-7B, in response to the same query.
 
-The chat bot UI is shown below:
+The chat bot web UI is shown below :
 
 ![](doc/img/s_03.png)
 
-The user can select the models in the navigation bar's drop down menu. 
+Users can interact with the chatbot via a web-based UI that includes a model selection dropdown in the navigation bar.
 
 
 
@@ -33,27 +46,34 @@ The user can select the models in the navigation bar's drop down menu.
 
 ### Program Design
 
-The test program is use the Ollama API designed for below scenarios:
+The chatbot utilizes the Ollama API and is designed for three primary scenarios:
 
-**Scenario 01** : 
+**Scenario 01 : Remote Access Without SSH Credentials**
 
-Assume you have one GPU server which running deepseek locally with the Ubuntu server version OS (without the desktop), you want to some people use the model but you don't want to tell them the ssh log password and you want to limited the Ollama API people can use. 
+For GPU servers running DeepSeek on an Ubuntu server without a desktop environment (which is difficult for the user to use the Desktop application tool such as anything LLM and the LM-studio), this chatbot allows external users to query the model without needing SSH access. The chatbot web host runs on the server and exposes port 5000 for multiple users within the same network.
 
-You can run the chatbot web host on the server and expose port 5000 for multiple users in the same network, then they or their program can send questions and get the answer as shown below:
+The scenario workflow diagram is shown below :
 
 ![](doc/img/s_04.png)
 
-**Scenario 02** :
+**Scenario 02: Customized System Prompts**
 
-You want to add customized system prompt or background information with the user's question, or we want to add a prompt to improve the detail level of the response. Such as when people ask "What is bubble sort?" For 0 knowledge student we want to change the question to "I am beginner to learn sort algo, what is bubble sort". For the people who have knowledge, we want to change the question to "I am expert and I want a python example, what is bubble sort?", then in the web host program we can append the related prompt in user's question based on our requirement. 
+The application allow the admin to modify user queries by appending relevant prompt context before send to the LLM. For example, user ask LLM to explain what is bubble sort algo, based on different users, the program can add the prompt to change the question to :
+
+- A beginner query: "I am new to sorting algorithms. What is bubble sort?"
+- An advanced query: "I am an expert and need a Python example. What is bubble sort?"
+
+This allows for more tailored responses based on user expertise.
+
+The scenario workflow diagram is shown below :
 
 ![](doc/img/s_05.png)
 
-**Scenario 03** :
+**Scenario 03: Multi-GPU Model Comparison**
 
-You have Multiple GPU servers in a subnet and running different LLM models such as deepseek-R1:1.5b , deepseek-R1:7b deepseek-coder-v2 in a subnet, now you want to access these models and compare the responses generated by different models. You can deploy the flask we host on your jump host then use the web host as a bridge to link the user with different Ollama model.
+For environments with multiple GPU servers running different LLM models (e.g., DeepSeek R1-1.5B, DeepSeek R1-7B, DeepSeek Coder V2), the chatbot serves as a bridge between users and these models. Users can compare responses from different models via a centralized UI. The scenario workflow diagram is shown below :
 
-
+![](doc/img/s_06.png)
 
  
 
@@ -65,17 +85,18 @@ You have Multiple GPU servers in a subnet and running different LLM models such 
 
 **Additional Lib/Software Need** 
 
-| Lib Module   | Version | Installation                              | Lib link                        |
-| ------------ | ------- | ----------------------------------------- | ------------------------------- |
-| **Flask**    | 1.1.2   | `pip install Flask`                       | https://pypi.org/project/Flask/ |
-| **requests** | 2.28.1  | `pip install requestspip install requests |                                 |
+| Lib Module   | Version | Installation           | Lib link                           |
+| ------------ | ------- | ---------------------- | ---------------------------------- |
+| **Flask**    | 1.1.2   | `pip install Flask`    | https://pypi.org/project/Flask/    |
+| **requests** | 2.28.1  | `pip install requests` | https://pypi.org/project/requests/ |
 
 **Program Source File List** 
 
 | Program File               | Execution Env | Module Description                  |
 | -------------------------- | ------------- | ----------------------------------- |
-| `src/app.py`               | python 3      | Main web host program               |
-| `src/templates/index.html` | html          | Main chat bot web page              |
+| `src/app.py`               | python 3      | Main web host program.              |
+| `src/`requestTest.py`      | python 3      | Web API request test program.       |
+| `src/templates/index.html` | html          | Main chat bot web page.             |
 | `src/static/script.js`     | JavaScript    | JS to update the conversation area. |
 | `src/static/style.css`     | CSS           | css file.                           |
 
@@ -85,9 +106,9 @@ You have Multiple GPU servers in a subnet and running different LLM models such 
 
 ### Program Usage
 
-**Step-1 : Add the LLM Ollama server in the program** 
+**Step 1: Add LLM Ollama Servers to the Program**
 
-Open the host program `app.py`, append the server IP and the model name with a unique IP as shown below:
+Modify `app.py` to append server details with a unique ID:
 
 ```
 OllamaHosts[<unique_ID>] = {'ip': <host IP address>, 'model': <llm model name>}
@@ -97,32 +118,34 @@ OllamaHosts[<unique_ID>] = {'ip': <host IP address>, 'model': <llm model name>}
 
 
 
-**Step_2 : Run the chat bot host**  
+**Step 2: Start the Chatbot Web Host**
 
-Run the chat bot host program with command : `python app.py`
+Execute the following command to start the chatbot:
 
-Open the web chat bot with URL  http://127.0.0.1:5000/ , select the mode you want to connect in the drop down menu:
+```
+python app.py
+```
+
+Access the web UI at `http://127.0.0.1:5000/` and select the desired model from the dropdown menu.
 
 ![](doc/img/s_08.png)
 
-**Step-3 : Test web chat bot and API Call** 
-
-Send the question from the chat:
 
 
+**Step 3: Test the Chatbot via Web UI and API Calls**
 
+- **Web Interface** : Users can input queries directly into the chatbot interface and receive responses.
 
+![](doc/img/s_09.png)
 
+- **API Request** : For program usage, use python request lib to send a http `GET` request to get response: 
 
+```
+requests.get("http://127.0.0.1:5000/getResp", json={'model':'localhost-DS1.5b', 'message':"who are you"})
+```
 
-
-
-
-
-
-
-
+Alternatively, refer to `requestTest.py` for more API usage examples.
 
 ------
 
-> 
+> last edit by LiuYuancheng (liu_yuan_cheng@hotmail.com) by 28/02/2025 if you have any question , please send me a message. 

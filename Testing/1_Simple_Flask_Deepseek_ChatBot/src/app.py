@@ -89,13 +89,12 @@ def chat():
 
     return Response(generate(), mimetype='text/plain')
 
-
-
 #-----------------------------------------------------------------------------
 @app.route('/getResp', methods=['GET', ])
 def getLastRst():
-    """ Api to get the question answer
-        requests.get(http://%s:%s/getLastRst, json={'model':<modelname>, 'message':<user_message>})
+    """ Api usage example to get the question answer:
+        resp = requests.get("http://127.0.0.1:5000/getResp", json={'model':'localhost-DS1.5b', 'message':"who are you"})
+        print(resp.content)
     """
     content = request.json
     response = None 
