@@ -1,4 +1,4 @@
-# Use a simple web wrapper to share the Local Deep Seek-R1 Model Service 
+# Use a simple web wrapper to share the Local Deep Seek-R1 Model Service to LAN users
 
 In the previous article [Deploying DeepSeek-R1 Locally with a Custom RAG Knowledge Data Base](../1_LocalDeepSeekWithRAG/), we have deploy the LLM deepSeek-r1:7b in a local computer with GPU, now what if we want to share the deepseek-R1 service to your friend in the same subnet or if you want to use your phone to access the deepseek LLM model or access multiple GPUs in the subnet. When you configured the Ollama, it provide the API for you to interact with the module now is running, but by default it is only open for the localhost, the other computer can not call it if you don't change the Ollama configuration and once our change the config, all the API are exposed to outside, what if you want to limit the access (such as only allow send question instead of create the conversating chain) ? There is a very simple way to create a wrapper web host program to call the Ollama API and provide a web interface for your mobile device and a get API interface for your program.
 
@@ -30,7 +30,18 @@ The chat bot web UI is shown below :
 
 ![](img/s_03.png)
 
-Users can interact with the chatbot via a web-based UI that includes a model selection dropdown in the navigation bar.
+Users can interact with the chatbot via a web-based UI that includes a model selection dropdown in the navigation bar. The Mobile device view is shown below:
+
+![](img/s_04.png)
+
+The remote API function call (Http `GET` ) is show below:
+
+```python
+resp = requests.get("http://127.0.0.1:5000/getResp", json={'model':'localhost-DS1.5b', 'message':"who are you"})
+print(resp.content)
+```
+
+
 
 
 
@@ -107,22 +118,28 @@ Assume you have one GPU server running DeepSeek on an Ubuntu server without a de
 1. You don't want to share people the GPU server ssh login credentials. 
 2. You don't want to open all the Ollama service API to people, you want to limited the access such as only allow response without showing deepseek's "thinking" log. 
 3. When you expose the Ollama API, other people can use command line curl to generate a request as , but if people want to use mobile device 
+4. You want to add some customized filter for the user's request and LLM's reponse.
 
 This chatbot allows external users to query the model without needing SSH access. The chatbot web host runs on the server and exposes port 5000 for multiple users within the same network and the scenario workflow diagram is shown below:
 
 
 
+#### Use Case Scenario 02
+
+The application allow the admin to modify user queries by appending relevant prompt context before send to the LLM. For example, user ask LLM to explain what is bubble sort algo, based on different users, the program can add the prompt to change the question to :
+
+- A beginner query: "I am new to sorting algorithms. What is bubble sort?"
+- An advanced query: "I am an expert and need a Python example. What is bubble sort?"
+
+This allows for more tailored responses based on user expertise.
+
+The scenario workflow diagram is shown below :
 
 
 
+#### Use Case Scenario 03
 
-
-
-
-
-
-
-
+For environments with multiple GPU servers running different LLM models (e.g., DeepSeek R1-1.5B, DeepSeek R1-7B, DeepSeek Coder V2), the chatbot serves as a bridge between users and these models. Users can compare responses from different models via a centralized UI. The scenario workflow diagram is shown below :
 
 
 
