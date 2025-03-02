@@ -7,7 +7,7 @@ In the previous article [Deploying DeepSeek-R1 Locally with a Custom RAG Knowled
 - Enables programmatic API calls with controlled access.
 - Acts as a central hub for connecting to multiple GPU servers and different DeepSeek LLM versions.
 
-```
+```python
 # Created:     2025/02/28
 # version:     v_0.0.1
 # Copyright:   Copyright (c) 2025 LiuYuancheng
@@ -32,7 +32,7 @@ This article provides an overview of the Flask wrapper, explores practical use c
 
 The use case flow diagram is shown below:
 
-
+![](img/title.png)
 
 By implementing this web wrapper, users gain secure, controlled access to DeepSeek-R1 models through a user-friendly interface, suitable for both web-based and programmatic interaction. 
 
@@ -197,7 +197,7 @@ The web wrapper serves as a central hub that:
 
 
 
-#### Scenario 4: Load Balancing and Monitoring GPUs
+#### Use Case Scenario 04: GPUs Load Balancing and Requests Monitoring 
 
 **Problem** :
 
@@ -206,6 +206,42 @@ In a multi-GPU cluster, efficiently managing requests from different users or no
 **The wrapper solution** : 
 
 The web wrapper acts as a request management layer, implementing a queue system to log user queries and distribute them efficiently across available GPU servers. By balancing workloads dynamically, it prevents overloading a single GPU while ensuring optimal resource utilization. The request logs can also be stored for analysis, enabling administrators to track usage patterns and improve system performance.
+
+
+
+------
+
+### Program Deploy and Usage
+
+To install the Ollama and setup deep seek model in a local computer, please follow the "**Step 1 : Deploy DeepSeek-R1 Model on Your Local Machine**" in this manual: https://github.com/LiuYuancheng/Deepseek_Local_LATA/blob/main/Articles/1_LocalDeepSeekWithRAG/readme.md
+
+To deploy the program, please follow the **setup section** in the wrapper read me file :  https://github.com/LiuYuancheng/Deepseek_Local_LATA/blob/main/Testing/1_Simple_Flask_Deepseek_ChatBot/readme.md
+
+Then modify the `app.py` to add the GPU server (Ollama service) details with a unique ID in the wrapper program:
+
+```
+OllamaHosts[<unique_ID>] = {'ip': <host IP address>, 'model': <llm model name>}
+```
+
+![](img/s_08.png)
+
+Execute the following command to start the chatbot:
+
+```
+python app.py
+```
+
+Access the web UI at `http://127.0.0.1:5000/` or `http://<wrapper_host_IP>:5000/` and select the desired model from the dropdown menu.
+
+![](img/s_09.png)
+
+**API Request** : For program usage, use python request lib to send a http `GET` request to get response: 
+
+```
+requests.get("http://127.0.0.1:5000/getResp", json={'model':'localhost-DS1.5b', 'message':"who are you"})
+```
+
+Alternatively, refer to `requestTest.py` for more API usage examples.
 
 
 
