@@ -1,6 +1,6 @@
 # Use a Simple Web Wrapper to Share the Local Deep Seek-R1 Model Service to LAN Users
 
-In the previous article [Deploying DeepSeek-R1 Locally with a Custom RAG Knowledge Data Base](../1_LocalDeepSeekWithRAG/), we introduced the detail steps about deploying DeepSeek-R1:7b locally with a custom RAG knowledge database on a desktop with RTX3060. Once the LLM deepseek-r1:7b is running on the local GPU-equipped computer, a new challenge emerges: I can only use the LLM service on the GPU computer, what if I want to use it from other device in my LAN, is there any way I can access it from a mobile device or share this service with friends in the same network? By default, Ollama only opens its API to the localhost, meaning that external devices in your LAN cannot easily interact with the model. Changing the configuration to expose the API fully may solve connectivity issues—but it also removes the safeguards that limit potentially risky operations, such as creating complete conversational chains. The user need a controlled interface that:
+In the previous article [Deploying DeepSeek-R1 Locally with a Custom RAG Knowledge Data Base](../1_LocalDeepSeekWithRAG/), we introduced the detail steps about deploying the DeepSeek-R1:7b locally with a customized RAG knowledge database on a desktop with RTX3060. Once the LLM deepseek-r1:7b is running on the local GPU-equipped computer, a new challenge emerges: we can only use the LLM service on the GPU computer, what if we want to use it from other devices in my LAN, is there any way I can access it from a mobile device or share this service with other computer in the same network? By default, Ollama only opens its API to the localhost, meaning that external devices in your LAN cannot easily interact with the model. Changing the configuration to expose the API fully may solve connectivity issues—but it also removes the safeguards that limit potentially risky operations, such as creating complete conversational chains. The user needs a controlled interface that can:
 
 - Limits access to only the necessary functions (e.g., sending questions and receiving responses).
 - Provides an intuitive web-based interface for mobile devices.
@@ -22,10 +22,10 @@ In the previous article [Deploying DeepSeek-R1 Locally with a Custom RAG Knowled
 
 ### Introduction
 
-This article explores how a simple Python-Flask-based web wrapper acts as a controlled “bridge” between the local DeepSeek service and LAN users and fullfill below five request:
+This article provides an overview of the Flask wrapper, explores practical use case scenarios, and explains how to configure Ollama to expose the service for LLM API calls. We will explore how a simple Python-Flask-based web wrapper acts as a controlled “bridge” between the local LLM service (deepseek-r1) and LAN users and fulfill below five request:
 
 - Connect multiple local GPU servers running different DeepSeek LLM versions within a subnet.
-- Limit the Ollama API access for the user.
+- Limit or filter the Ollama API access for the LAN user.
 - Enable remote testing and performance comparison of LLM responses.
 - Provide controlled access to specialized/fine-tuned models without exposing server credentials.
 - Facilitate prompt engineering by modifying user queries before model submission.
@@ -34,7 +34,7 @@ The use case flow diagram is shown below:
 
 
 
-By implementing this web wrapper, users gain secure, controlled access to DeepSeek models through a user-friendly interface, suitable for both web-based and programmatic interaction. This article provides an overview of the Flask wrapper, explores practical use case scenarios, and explains how to configure Ollama to expose the service for LLM API calls effectively.
+By implementing this web wrapper, users gain secure, controlled access to DeepSeek-R1 models through a user-friendly interface, suitable for both web-based and programmatic interaction. 
 
 
 
@@ -48,22 +48,28 @@ This application provides a user-friendly interface for remote access to multipl
 - Allowing shared access to specialized LLMs (fine-tuned or RAG embedded) without requiring direct SSH access.
 - Comparing the performance of different LLM models, such as DeepSeek R1-1.5B and DeepSeek R1-7B, in response to the same query.
 
+The workflow is very simple:
+
+```
+User → Web Wrapper (Port 5000) → Ollama API (Port 11434, localhost-only/remote) → Response  
+```
+
 The chat bot web UI is shown below :
 
 ![](img/s_03.png)
 
-Users can interact with the chatbot via a web-based UI that includes a model selection dropdown in the navigation bar. The Mobile device view is shown below:
+Users can interact with the chatbot via a web-based UI that includes a model selection dropdown in the navigation bar. The mobile device (phone) view is shown below:
 
 ![](img/s_04.png)
 
-The remote API function call (Http `GET` ) is show below:
+The remote program API function calls (Http `GET` ) is show below:
 
 ```python
 resp = requests.get("http://127.0.0.1:5000/getResp", json={'model':'localhost-DS1.5b', 'message':"who are you"})
 print(resp.content)
 ```
 
-Program source repo: https://github.com/LiuYuancheng/Deepseek_Local_LATA/tree/main/Testing/1_Simple_Flask_Deepseek_ChatBot
+> Program source repo: https://github.com/LiuYuancheng/Deepseek_Local_LATA/tree/main/Testing/1_Simple_Flask_Deepseek_ChatBot
 
 
 
@@ -125,7 +131,7 @@ On Windows, Ollama inherits your user and system environment variables.
 1. First Quit Ollama by clicking on it in the task bar.
 2. Start the Settings (Windows 11) or Control Panel (Windows 10) application and search for *environment variables*.
 3. Click on *Edit environment variables for your account*.
-4. Edit or create a new variable for your user account for `OLLAMA_HOST`, set its value to 0.0.0.0
+4. Edit or create a new variable for your user account for `OLLAMA_HOST`, set its value to `0.0.0.0`
 5. Click OK/Apply to save.
 6. Start the Ollama application from the Windows Start menu.
 
@@ -144,67 +150,86 @@ Imagine you have a GPU server running DeepSeek on an Ubuntu system without a des
 
 You want to limited the access such as only allow response without showing deepseek's "thinking" log and you also want to add some customized filter for the user's request and LLM's response.
 
-The use case scenario diagram is shown below:
+**The wrapper solution and work flow diagram is shown below:**
 
-
-
-**Solution:**
-The web wrapper allows you to:
+![](img/s_05.png)The web wrapper allows you to:
 
 - Expose only the necessary API endpoints (e.g., sending questions and receiving answers) on port 5000.
 - Prevent direct access to sensitive parts of the Ollama API.
 - Provide a clean web interface accessible from any device on the network, including mobile devices.
-- Provide a limited http API for the program 
+- Provide a limited http API for the other program running on computer in the same LAN.
 
 
 
-### Use Case Scenario 02: Customized Query Handling Based on User Expertise
+#### Use Case Scenario 02: Customized Query Handling Based on User Expertise
 
 **Problem:**
-Different users have different levels of expertise. A beginner might need a simplified explanation of an algorithm like bubble sort, whereas an expert might require a detailed technical example.
+Different users have different levels of expertise. For example, A beginner might need a simplified explanation of an algorithm like bubble sort, whereas an expert might require a detailed technical example.
 
-**Solution:**
+**The wrapper solution and work flow diagram is shown below:**
+
+![](img/s_06.png)
+
 The wrapper can intercept user queries and append context-specific prompts before sending the query to the LLM. For example:
 
-- **Beginner Query:** The system modifies “What is bubble sort?” to “I am new to sorting algorithms. What is bubble sort?”
+- **Beginner Query:** The system modifies “What is bubble sort?” to “I am new beginner to sorting algorithms. What is bubble sort?”
 - **Advanced Query:** It transforms the question into “I am an expert and need a Python example. What is bubble sort?”
 
 This dynamic prompt engineering tailors responses to the user’s needs.
 
 
 
+#### Use Case Scenario 03: Multi-GPU Server and Model Comparison
 
+**Problem:**
+In environments with several GPU servers running various DeepSeek LLM models (such as DeepSeek R1-1.5B, DeepSeek R1-7B, and DeepSeek Coder V2), comparing the performance and responses of these models can be challenging when managed separately.
 
-Assume you have one GPU server running DeepSeek on an Ubuntu server without a desktop environment (which is difficult for the user to use the Desktop application tool such as anything LLM and the LM-studio), now you want to share the LLM service to the people in the same subnet, you may meet these problems:
+**The wrapper solution and work flow diagram is shown below:**
 
-1. You don't want to share people the GPU server ssh login credentials. 
-2. You don't want to open all the Ollama service API to people, you want to limited the access such as only allow response without showing deepseek's "thinking" log. 
-3. When you expose the Ollama API, other people can use command line curl to generate a request as , but if people want to use mobile device 
-4. You want to add some customized filter for the user's request and LLM's response.
+![](img/s_07.png)
 
-This chatbot allows external users to query the model without needing SSH access. The chatbot web host runs on the server and exposes port 5000 for multiple users within the same network and the scenario workflow diagram is shown below:
+The web wrapper serves as a central hub that:
 
-
-
-#### Use Case Scenario 02
-
-The application allow the admin to modify user queries by appending relevant prompt context before send to the LLM. For example, user ask LLM to explain what is bubble sort algo, based on different users, the program can add the prompt to change the question to :
-
-- A beginner query: "I am new to sorting algorithms. What is bubble sort?"
-- An advanced query: "I am an expert and need a Python example. What is bubble sort?"
-
-This allows for more tailored responses based on user expertise.
-
-The scenario workflow diagram is shown below :
+- Connects to multiple local GPU servers.
+- Provides a dropdown menu to select different models.
+- Allows users to send the same query to multiple models for easy performance and response comparison.
+- Offers a controlled and consistent interface regardless of the underlying server.
 
 
 
-#### Use Case Scenario 03
+#### Scenario 4: Load Balancing and Monitoring GPUs
 
-For environments with multiple GPU servers running different LLM models (e.g., DeepSeek R1-1.5B, DeepSeek R1-7B, DeepSeek Coder V2), the chatbot serves as a bridge between users and these models. Users can compare responses from different models via a centralized UI. The scenario workflow diagram is shown below :
+**Problem** :
+
+In a multi-GPU cluster, efficiently managing requests from different users or node IP addresses can be challenging. Without proper request distribution, some GPUs may become overloaded while others remain underutilized. Additionally, logging request data for monitoring and optimization purposes is crucial.
+
+**The wrapper solution** : 
+
+The web wrapper acts as a request management layer, implementing a queue system to log user queries and distribute them efficiently across available GPU servers. By balancing workloads dynamically, it prevents overloading a single GPU while ensuring optimal resource utilization. The request logs can also be stored for analysis, enabling administrators to track usage patterns and improve system performance.
 
 
 
-https://github.com/ollama/ollama/blob/main/docs/api.md
+------
 
-Reference: 
+### Conclusion
+
+A simple Flask wrapper unlocks powerful use cases for local LLM deployments:
+
+1. **Security**: Limits exposure of Ollama endpoints.
+2. **Accessibility**: Provides mobile-friendly interfaces.
+3. **Flexibility**: Enables prompt engineering, multi-model testing, and load balancing.
+
+The simple Flask web wrapper is a powerful solution for sharing the DeepSeek-R1 model service with LAN users securely and efficiently. By bridging the gap between the local Ollama API and external devices, the wrapper ensures that the service remains accessible yet controlled. Whether you’re looking to offer a streamlined mobile interface, safeguard sensitive API endpoints, or compare multiple LLM models, this approach addresses common challenges and enhances the usability of local DeepSeek deployments.
+
+
+
+------
+
+### Reference  
+
+- https://github.com/ollama/ollama/blob/main/docs/api.md
+- https://github.com/ollama/ollama/blob/main/docs/faq.md#how-do-i-configure-ollama-server
+
+------
+
+> last edit by LiuYuancheng (liu_yuan_cheng@hotmail.com) by 08/02/2025 if you have any problem, please send me a message. 
