@@ -18,6 +18,19 @@ In the previous article [Deploying DeepSeek-R1 Locally with a Custom RAG Knowled
 
 [TOC]
 
+- [Use a Simple Web Wrapper to Share the Local Deep Seek-R1 Model Service to LAN Users](#use-a-simple-web-wrapper-to-share-the-local-deep-seek-r1-model-service-to-lan-users)
+    + [Introduction](#introduction)
+    + [Introduction of the DeepSeek Flask Web Wrapper](#introduction-of-the-deepseek-flask-web-wrapper)
+    + [Expose Ollama Service API in LAN](#expose-ollama-service-api-in-lan)
+    + [Use Case Scenarios](#use-case-scenarios)
+      - [Use Case Scenario 01: Secure Sharing on a Headless GPU Server](#use-case-scenario-01--secure-sharing-on-a-headless-gpu-server)
+      - [Use Case Scenario 02: Customized Query Handling Based on User Expertise](#use-case-scenario-02--customized-query-handling-based-on-user-expertise)
+      - [Use Case Scenario 03: Multi-GPU Server and Model Comparison](#use-case-scenario-03--multi-gpu-server-and-model-comparison)
+      - [Use Case Scenario 04: GPUs Load Balancing and Requests Monitoring](#use-case-scenario-04--gpus-load-balancing-and-requests-monitoring)
+    + [Program Deploy and Usage](#program-deploy-and-usage)
+    + [Conclusion](#conclusion)
+    + [Reference](#reference)
+
 ------
 
 ### Introduction
@@ -33,6 +46,8 @@ This article provides an overview of the Flask wrapper, explores practical use c
 The use case flow diagram is shown below:
 
 ![](img/title.png)
+
+`Figure-01: Use case work flow diagram, version v_0.0.1 (2025)`
 
 By implementing this web wrapper, users gain secure, controlled access to DeepSeek-R1 models through a user-friendly interface, suitable for both web-based and programmatic interaction. 
 
@@ -58,9 +73,13 @@ The chat bot web UI is shown below :
 
 ![](img/s_03.png)
 
+`Figure-02: Flask Deepseek service wrapper web chat bot UI , version v_0.0.1 (2025)`
+
 Users can interact with the chatbot via a web-based UI that includes a model selection dropdown in the navigation bar. The mobile device (phone) view is shown below:
 
 ![](img/s_04.png)
+
+`Figure-03: Flask Deepseek service wrapper web chat bot UI on Iphone , version v_0.0.1 (2025)`
 
 The remote program API function calls (Http `GET` ) is show below:
 
@@ -143,6 +162,10 @@ On Windows, Ollama inherits your user and system environment variables.
 
 ### Use Case Scenarios
 
+The wrapper can by applied in below 4 use case scenarios to solve the users problem: 
+
+
+
 #### Use Case Scenario 01: Secure Sharing on a Headless GPU Server
 
 **Problem:**
@@ -152,7 +175,7 @@ You want to limited the access such as only allow response without showing deeps
 
 **The wrapper solution and work flow diagram is shown below:**
 
-![](img/s_05.png)The web wrapper allows you to:
+![](img/s_05.png)The web wrapper The Flask web wrapper allows you to:
 
 - Expose only the necessary API endpoints (e.g., sending questions and receiving answers) on port 5000.
 - Prevent direct access to sensitive parts of the Ollama API.
