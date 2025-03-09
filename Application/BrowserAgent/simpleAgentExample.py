@@ -17,9 +17,12 @@
 """ The model requests at least deepseek-r1:7b model, for 1.5b most of the tasks 
     will be failed at step2. 
     Lib needed:
-    - langchain_ollama: https://pypi.org/project/langchain-ollama/
-    - browser-user: https://github.com/browser-use/browser-use/tree/main
+        - langchain_ollama: https://pypi.org/project/langchain-ollama/
+        - browser-user: https://github.com/browser-use/browser-use/tree/main
     Reference: https://github.com/browser-use/browser-use/issues/442
+    Problem and solution:
+        - if you see the log shows agent keep repeating the [step1] please confirm 
+        the ollama service is running and the model name is correct.
 """
 import os
 import asyncio
