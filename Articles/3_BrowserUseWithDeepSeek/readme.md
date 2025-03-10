@@ -19,15 +19,17 @@ This article will introduce how to use the impressive browser interaction librar
 
 ### Environment Introduction
 
-Assume we have 2 or more machine in a LAN, one GPU computer and multiple normal Laptop. Now we want to create an AI Agent which can help control the browser on the Laptop and the GPU computer. The network topology is shown below:
+Assume we have 2 or more machines in a LAN, one GPU computer and multiple normal Laptop. Now we want to create an AI Agent which can help control the browser on the Laptop and the GPU computer. The network topology is shown below:
 
+![](img/s_03.png)
 
+To setup the environment we need to setup Deepseek service on the GPU server and open for the other LAN nodes. Then we install the agent on the operating Laptops. Configuration:
 
-To setup the environment we need to setup Deepseek service on the GPU server and open for the other LAN nodes. Then we install the agent on the operating machine. 
-
-
-
-
+| VM name          | IP address     | Program                 | Human Language Requests                                      |
+| ---------------- | -------------- | ----------------------- | ------------------------------------------------------------ |
+| Local GPU server | 192.168.50.12  | Ollama [deepseek-r1:8b] | N.A                                                          |
+| Laptop01         | 192.168.50.112 | Browser Control Agent   | Google search deepseek and summarize the product features in 500 words. |
+| Laptop02         | 192.168.50.113 | Browser Control Agent   | Find the project “**[Deepseek_Local_LATA](https://github.com/LiuYuancheng/Deepseek_Local_LATA)**” and open the readme file, summarize the project in 100 words. |
 
 
 
