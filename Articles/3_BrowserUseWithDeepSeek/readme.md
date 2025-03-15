@@ -1,6 +1,15 @@
-# Use Local/LAN DeepSeek Service Control Browser
+# Creating an MCP Agent with Local/LAN DeepSeek Service for Browser Control
 
-This article will introduce how to use the impressive browser interaction library [browser-use](https://github.com/browser-use/browser-use) with the deepseek LLM Module to create a Agent which can help operate the browser to finish some tasks or generate network traffic with human language. We will introduce step by steps to setup the Ollama Deepseek service in the LAN, then link the agent to the agent to control the browser.
+In this article, we explore how to build an AI-driven Model Context Protocol (MCP) Agent that can help user to operate a web browser to complete tasks or generate network traffic based on human language instructions. This is achieved using the powerful [browser-use](https://github.com/browser-use/browser-use) library in combination with a Local/LAN configured DeepSeek LLM module service.
+
+We will Introduce step by step through setting up the **Ollama DeepSeek service** in a local LAN environment, integrating it with the MCP Agent, and integrate with browser automation. Since the DeepSeek model runs locally, you won't have to worry about the "deepseek service busy" issues and token fees. Additionally, this setup allows for testing various models or including customized fine-tuned DeepSeek versions to compare the performance of different models.
+
+This article will cover the following sections:
+
+- **Agent Test Scenario Introduction** – Overview of use cases with the demo.
+- **Agent Operation Detailed Design** – Technical introduction of how the MCP Agent interacts with the browser.
+- **Test Environment Setup** – Configuring the local DeepSeek service and browser interaction module.
+- **Test Result Summary and Conclusion** – Evaluating performance, insights, and potential improvements.
 
 ```
 # Created:     2025/03/08
@@ -16,6 +25,48 @@ This article will introduce how to use the impressive browser interaction librar
 
 
 ------
+
+### Agent Task Scenarios
+
+To demonstrate the capabilities of the MCP Agent, we evaluate its performance through two task scenarios. In each case, the agent receives a human language input string and autonomously interacts with a web browser to retrieve and summarize relevant information. The final output is a concise text summary file.
+
+#### Scenario 1: General Information Search & Summarization
+
+In this scenario, the agent performs a **web search**, gathers relevant content, and generates a structured summary.
+
+Human Language Input string:
+
+```
+Google search DeepSeek and summarize the product features in 500 words. 
+```
+
+**Agent Operation:** The agent initiates a search query, extracts key details from multiple sources, and compiles a summary. The demo video is shown below:
+
+![](img/test1.gif)
+
+
+
+#### Scenario 2: Targeted Web Content Extraction & Summarization
+
+Here, the agent is tasked with visiting a specific website or project repository, extracting critical details (e.g., a README file), and summarizing the content.
+
+Human Language Input string:
+
+```
+Find the project “Deepseek_Local_LATA,” open the README file, and summarize the project in 100 words.
+```
+
+**Agent Operation:** The agent locates the repository, extracts the README content, and generates a concise summary.The demo video is shown below:
+
+![](img/s_02.gif)
+
+These scenarios showcase how the MCP Agent can autonomously navigate the web, retrieve relevant information, and provide structured summaries—all powered by **local/LAN DeepSeek AI processing** for efficiency and control.
+
+
+
+------
+
+
 
 ### Environment Introduction
 
