@@ -72,6 +72,37 @@ These service includes several agents program provide tools, resources, and prom
 
 By managing resources with URI-based access patterns and supporting capability negotiation, MCP Servers play a crucial role in extending the functionalities of AI systems, allowing them to perform actions or retrieve information securely and efficiently. 
 
+The agent workflow is very simple as shown below, 
+
+![](img/s_05.png)
+
+We will add a prompt before the user's requirement to split to a TODO task list. Below is an example we append before the user's request:
+
+```
+Prompt: I am a beginner to use browser, please help list the detail ToDOo list for…
+```
+
+When the user input string Google search DeepSeek and summarize the product features in 500 words, the request agent send to AI will be change to below contents : 
+
+```
+I am a beginner to use browser, please help list the detail ToDOo step for using google search DeepSeek and summarize the product features in 500 words. 
+The output should follow below JSON format example:
+{
+    "initURL" = "<The init URL to use the browser to open >"
+    tasksList = [ "1. <Step1 with the initURL>",
+                  "2. <Step2 based on step1's web contents or result >",
+				  "3. <Step3 based on step2's web contents or result>",
+				  ...
+                 ]
+}
+```
+
+The we open 
+
+
+
+
+
 
 
 ------
