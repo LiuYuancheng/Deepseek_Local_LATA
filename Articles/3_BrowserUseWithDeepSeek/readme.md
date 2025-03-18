@@ -24,7 +24,7 @@ This article will cover the following sections:
 
 ------
 
-### Agent Task Scenarios
+### MCP Agent Task Scenarios
 
 To demonstrate the capabilities of the MCP Agent, we evaluate its performance through two task scenarios. In each case, the agent receives a human language input string and autonomously interacts with a web browser to retrieve and summarize relevant information. The final output is a concise text summary file.
 
@@ -62,48 +62,107 @@ Find the project “Deepseek_Local_LATA,” open the README file, and summarize 
 
 ------
 
-### Agent Operation Detailed Design
+### MCP Agent Operation Detailed Design
 
-Before we introduce the detailed design, we will introduce the background knowledge about the Model Context Protocol (MCP):The **Model Context Protocol (MCP)** is an open standard that facilitates secure and standardized connections between AI assistants and various data sources. MCP enables Large Language Models (LLMs) to access tools and datasets directly, enhancing their ability to retrieve information and execute tasks effectively. In the MCP architecture, **MCP Servers** are lightweight programs that expose specific capabilities through the standardized protocol. The MCP service is the intermediate level program running between the tool or application and the LLM service 
+Before diving into the agent’s detailed design, let's first introduce the **Model Context Protocol (MCP)**. MCP is an open standard that enables secure and standardized connections between AI assistants and various data sources. It allows Large Language Models (LLMs) to access tools and datasets directly, improving their ability to retrieve and process information.
 
-These service includes several agents program provide tools, resources, and prompt templates that clients can discover and utilize, enabling rich interactions between clients and language models. In this article, we will create a simple MCP agent which can interact with the browser, the work flow is shown below:
+#### Background: Model Context Protocol (MCP)
+
+In an MCP architecture, **MCP Servers** act as lightweight programs that expose specific functionalities through the standardized protocol. The **MCP Service** serves as an intermediary layer, bridging applications or tools with the LLM service. These services include various **MCP Agents**, each providing tools, resources, and prompt templates that enable dynamic interactions between AI systems and clients.
+
+For this project, we develop a simple **MCP Agent** that interacts with a web browser. The **workflow** of this agent is illustrated below:
 
 ![](img/s_04.png)
 
-By managing resources with URI-based access patterns and supporting capability negotiation, MCP Servers play a crucial role in extending the functionalities of AI systems, allowing them to perform actions or retrieve information securely and efficiently. 
+By managing resources with URI-based access patterns and supporting capability negotiation, MCP Servers play a crucial role in extending the functionalities of AI systems, allowing them to perform actions or retrieve information securely and efficiently.
 
-The agent workflow is very simple as shown below, 
+#### Agent Workflow Overview
+
+The agent workflow is very simple as shown below and it operates in three primary steps:
+
+- Step 1: Add Scenario Prompt & Generate a To-Do List
+- Step 2: Interact with the Browser
+- Step 3: Generate the Final Summary
 
 ![](img/s_05.png)
 
-We will add a prompt before the user's requirement to split to a TODO task list. Below is an example we append before the user's request:
+##### Step 1: Add Scenario Prompt & Generate a To-Do List
+
+The agent begins by **modifying the user’s input request** into a structured **To-Do list**. This step ensures that the agent understands how to systematically execute the requested task. Below is an example prompt we append before the user's request:
 
 ```
-Prompt: I am a beginner to use browser, please help list the detail ToDOo list for…
+Prompt: I am a beginner using a browser, please list the detailed To-Do steps for...
 ```
 
-When the user input string Google search DeepSeek and summarize the product features in 500 words, the request agent send to AI will be change to below contents : 
+When the user input string `Google search DeepSeek and summarize the product features in 500 words`, the request agent send to AI will be modified to below contents : 
 
 ```
-I am a beginner to use browser, please help list the detail ToDOo step for using google search DeepSeek and summarize the product features in 500 words. 
-The output should follow below JSON format example:
+I am a beginner using a browser, please help list the detailed To-Do steps for using Google search to find DeepSeek and summarize its product features in 500 words. 
+
+The output should follow the JSON format below:
 {
-    "initURL" = "<The init URL to use the browser to open >"
-    tasksList = [ "1. <Step1 with the initURL>",
-                  "2. <Step2 based on step1's web contents or result >",
-				  "3. <Step3 based on step2's web contents or result>",
-				  ...
-                 ]
+    "initURL": "<Initial browser URL>",
+    "tasksList": [
+        "1. <Step 1 - Perform an action>",
+        "2. <Step 2 - Process results based on previous step>",
+        "3. <Step 3 - Extract relevant information>",
+        ...
+    ]
 }
 ```
 
-The we open 
+Then we send the request to the Deepseek to get below ToDo list:
+
+```
+tasksList = [ 
+	"1. Type in for 'deepseek' in the Google page's search bar",
+	"2. Click the first search result",
+	"3. Select the first deepseek link in the google search result page"
+	"4. Base on the web content in the link, summarize the contents in 500 words"
+]
+```
 
 
 
+##### Step 2: Interact with the Agent Host's Browser
+
+Once the **To-Do list** is generated, the agent executes the steps autonomously using the Playwright library and browser-use interaction module:
+
+1. Open the initial URL (Google search page).
+2. Perform sequential actions from the To-Do list (e.g., typing, clicking, navigating).
+3. Analyze the current webpage’s content using browser-use and decide whether it satisfies the step requirements.
+4. Continue to the next step until all tasks are completed.
+
+Each step is evaluated against real-time webpage analysis to ensure accurate execution. If a step cannot be completed, the agent attempts corrective measures or logs an error.
+
+Reference: 
+
+- Playwright : https://github.com/microsoft/playwright
+- Browser-Use: https://github.com/browser-use/browser-use
 
 
 
+**Step3: Generate the result summary**
+
+Once all tasks in the To-Do list are completed, the extracted content is sent to DeepSeek LLM for summarization. The Final Verification Prompt Sent to LLM:
+
+```
+The result content is: <Extracted text>. 
+
+Can this content fulfill the user's request to Google search DeepSeek and summarize its product features in 500 words? 
+```
+
+The final output consists of:
+
+- The extracted content summary.
+- DeepSeek’s verification of result accuracy.
+- Archived test results for further evaluation.
+
+
+
+This design ensures a structured, automated, and accurate approach to executing browser-based tasks with an MCP-powered AI agent. By integrating local DeepSeek LLM processing, users benefit from lower latency, cost efficiency, and customization flexibility compared to cloud-based solutions.
+
+This agent can be further expanded to support different AI models, customized browsing automation, and multi-step reasoning tasks based on user-defined scenarios.
 
 ------
 
@@ -117,13 +176,13 @@ Assume we have 2 or more machines in a LAN, one GPU computer and multiple normal
 
 To setup the environment we need to setup Deepseek service on the GPU server and open for the other LAN nodes. Then we install the agent on the operating Laptops. Configuration:
 
-| VM name          | IP address     | Program                 | Human Language Requests                                      |
-| ---------------- | -------------- | ----------------------- | ------------------------------------------------------------ |
-| Local GPU server | 192.168.50.12  | Ollama [deepseek-r1:8b] | N.A                                                          |
-| Laptop01         | 192.168.50.112 | Browser Control Agent   | Google search deepseek and summarize the product features in 500 words. |
-| Laptop02         | 192.168.50.113 | Browser Control Agent   | Find the project “**[Deepseek_Local_LATA](https://github.com/LiuYuancheng/Deepseek_Local_LATA)**” and open the readme file, summarize the project in 100 words. |
+| VM name          | IP address     | Hardware spec            | OS          | Program                 | Human Language Requests                                      |
+| ---------------- | -------------- | ------------------------ | ----------- | ----------------------- | ------------------------------------------------------------ |
+| Local GPU server | 192.168.50.12  | Intel-i5, 32GB, RTX-3060 | Windows- 11 | Ollama [deepseek-r1:8b] | N.A                                                          |
+| Laptop01         | 192.168.50.112 | Intel-i5, 16GB, RTX-1060 | Windows- 11 | Browser Control Agent   | Google search deepseek and summarize the product features in 500 words. |
+| Laptop02         | 192.168.50.113 | Intel-i5, 16GB, no GPU   | Windows- 11 | Browser Control Agent   | Find the project “**[Deepseek_Local_LATA](https://github.com/LiuYuancheng/Deepseek_Local_LATA)**” and open the readme file, summarize the project in 100 words. |
 
-
+#### VM Configuration 
 
 
 
