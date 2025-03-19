@@ -168,7 +168,7 @@ This agent can be further expanded to support different AI models, customized br
 
 
 
-### Environment Introduction
+### Environment Introduction and setup
 
 Assume we have 2 or more machines in a LAN, one GPU computer and multiple normal Laptop. Now we want to create an AI Agent which can help control the browser on the Laptop and the GPU computer. The network topology is shown below:
 
@@ -182,9 +182,106 @@ To setup the environment we need to setup Deepseek service on the GPU server and
 | Laptop01         | 192.168.50.112 | Intel-i5, 16GB, RTX-1060 | Windows- 11 | Browser Control Agent   | Google search deepseek and summarize the product features in 500 words. |
 | Laptop02         | 192.168.50.113 | Intel-i5, 16GB, no GPU   | Windows- 11 | Browser Control Agent   | Find the project “**[Deepseek_Local_LATA](https://github.com/LiuYuancheng/Deepseek_Local_LATA)**” and open the readme file, summarize the project in 100 words. |
 
-#### VM Configuration 
+
+
+#### Configure the DeepSeek Service on GPU Node
+
+On the GPU server, follow below steps to setup the deepseek service with the Ollama and make it open to other nodes in the subnet. 
+
+##### Step 1 Install Ollama
+
+Download **Ollama** from the official website: https://ollama.com/download, and select the installation package for your operating system. 
+
+##### Step 2 Download and Run DeepSeek-R
+
+For my local configuration, I use a 3060GPU(12GB), so I can try the 8b. We can use the `ollama pull to down load the model`  or just use the run command, if the module is not download, Ollama will auto download it:
+
+```
+ollama run deepseek-r1:8b
+```
+
+##### Step 3 Expose the DeepSeek service to LAN
+
+**Setting environment variables on Mac**
+
+If Ollama is run as a macOS application, environment variables should be set using `launchctl`:
+
+1. For each environment variable, call `launchctl setenv`.
+
+```
+launchctl setenv OLLAMA_HOST "0.0.0.0:11434"
+```
+
+2. Restart Ollama application.
+
+**Setting environment variables on Linux**
+
+If Ollama is run as a systemd service, environment variables should be set using `systemctl`:
+
+1. Edit the systemd service by calling `systemctl edit ollama.service`. This will open an editor.
+
+2. For each environment variable, add a line `Environment` under section `[Service]`:
+
+   ```
+   [Service]
+   Environment="OLLAMA_HOST=0.0.0.0:11434"
+   ```
+
+3. Save and exit.
+
+4. Reload `systemd` and restart Ollama:
+
+   ```
+   systemctl daemon-reload
+   systemctl restart ollama
+   ```
+
+
+**Setting environment variables on Windows**
+
+On Windows, Ollama inherits your user and system environment variables.
+
+1. First Quit Ollama by clicking on it in the task bar.
+2. Start the Settings (Windows 11) or Control Panel (Windows 10) application and search for *environment variables*.
+3. Click on *Edit environment variables for your account*.
+4. Edit or create a new variable for your user account for `OLLAMA_HOST`, set its value to `0.0.0.0`
+5. Click OK/Apply to save.
+6. Start the Ollama application from the Windows Start menu.
+
+>  Reference : https://github.com/ollama/ollama/blob/main/docs/faq.md#how-do-i-configure-ollama-server
 
 
 
+#### Configure the Agent on Operation Node
+
+The operation node need to install a browser and python (>=3.11), then install the related lab.
+
+##### Step1 :  Install the python lib
+
+Install the langchain-ollama 0.2.3 with pip
+
+```
+pip install langchain-ollama
+```
+
+Install the lib browser-use with pip
+
+```
+pip install browser-use
+```
+
+Install the playwright 
+
+```
+playwright install
+```
 
 
+
+##### Step2 : Configure the agent parameters
+
+
+
+------
+
+> last edit by LiuYuancheng (liu_yuan_cheng@hotmail.com) by 18/03/2025 if you have any problem, please send me a message. 
