@@ -17,47 +17,61 @@
 
 
 import os
+import re
 import asyncio
-from langchain.agents import create_agent, AgentType
-from langchain_ollama import ChatOllama
+import ollama
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama.llms import OllamaLLM
 from browser_use import Agent
 
-OLLAMA_HOST_IP = "127.0.0.1"
-DP_MODEL_NAME = "deepseek-r1:7b"
+OLLAMA_HOST_IP = "localhost"
+DP_MODEL_NAME = "deepseek-r1:1.5b"
 NUM_CTX = 6000  # for deepseek-r1:7b and 8b use 6000, for higher model use 32000
 
 os.environ["ANONYMIZED_TELEMETRY"] = "false"
 os.environ["OLLAMA_HOST"] = "http://%s:11434" % OLLAMA_HOST_IP
 
-USER_REQUESR = "Summarize the contents of the official website of deepseek in 500 words."
+USER_REQUESR = "Use google search 'deepseek', go to its web and summarize the web contents in 100 words."
 
-TODO_PROMPT = "I am a beginner using a browser, please list the detailed To-Do steps for:"
+TODO_PROMPT = "I am an AI agent program can simulate human activites as a beginer user to use browser, please create the TO-DO steps need to be simulated for the task:"
+
 RST_PROMPT = """
-The output should follow the JSON format below:
+The output should exactly follow the JSON format below:
 {
-    "initURL": "<Initial browser URL>",
+    "initURL": "<First URL for browser to open>",
     "tasksList": [
         "1. <Step 1 - Perform an action>",
         "2. <Step 2 - Process results based on previous step>",
-        "3. <Step 3 - Extract relevant information>",
+        "3. <Step 3 - Perform next action>",
+        "4. <Step 4 - Process results based on previous step>",
         ...
     ]
 }
 """
+def askOllamaDS(questioinStr:str, dsModel:str, showTk=False):
 
-llm = ChatOllama(
-    model=DP_MODEL_NAME,
-    num_ctx=NUM_CTX,
-    temperature=0,
-    base_url="http://%s:11434" % OLLAMA_HOST_IP,
-)
+    try:
+        # Construct the Ollama server URL
+        ollama_url = "http://%s:11434"
 
-agent = create_agent(
-    llm=llm,
-    tools=tools,
-    agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION
-)
+        # Send the question to the Ollama server
+        response = ollama.generate(
+            model=dsModel,
+            prompt=questioinStr,
+            options={"base_url": ollama_url}  # Point to the custom Ollama server
+        )
+        # Extract and return the response
+        response = response["response"]
+        if showTk:
+            response = re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL)
+            # Remove any leading/trailing whitespace
+            response = response.strip()
+        return response
+
+    except Exception as e:
+        return "An error occurred: %s" %str(e)
+
 
 user_input = TODO_PROMPT + USER_REQUESR + RST_PROMPT
-response = agent.run(user_input)
+response = askOllamaDS(user_input, DP_MODEL_NAME)
 print(response)
