@@ -261,6 +261,7 @@ The operation node need to install a browser and python (>=3.11), then install t
 Install the langchain-ollama 0.2.3 with pip
 
 ```
+pip install ollama
 pip install langchain-ollama
 ```
 
