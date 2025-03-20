@@ -2,10 +2,11 @@
 #-----------------------------------------------------------------------------
 # Name:        dsBrowserCtrlAgent.py [python3]
 #
-# Purpose:     This module is a simple agent example program use the browser-use
-#              library and link to local/lan deepseek-r1 service help finish the 
-#              task or generate the traffic. Such as open google and search deepseek
-#              then go to the official web and summarize the contents in 500 words.
+# Purpose:     This module is a simple MCP agent example program use the 'browser-use'
+#              library and link to local/lan deepseek-r1 service to help use control the 
+#              browswer to finish some task or generate the traffic. Such as open google 
+#              and search deepseek then go to the official web and summarize the contents 
+#              in 500 words.
 #
 # Author:      Yuancheng Liu
 #
@@ -28,7 +29,7 @@ print("Current working directory is : %s" % os.getcwd())
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Load the config file.
-CONFIG_FILE_NAME = 'dsBrowserCtrlConfig'
+CONFIG_FILE_NAME = 'dsBrowserCtrlConfig.txt'
 gConfigPath = os.path.join(DIR_PATH, CONFIG_FILE_NAME)
 iConfigLoader = ConfigLoader.ConfigLoader(gConfigPath, mode='r')
 if iConfigLoader is None:
@@ -53,8 +54,8 @@ TODO_PROMPT = "I am an AI agent program can simulate human actions as a beginner
 RST_PROMPT = """
 The output should exactly follow the JSON format below:
 {
-    "initURL": "<First URL for browser to open>",
-    "tasksList": [
+    "initURL":"<First URL for browser to open>",
+    "tasksList":[
         "1. <Step 1 - Perform an action>",
         "2. <Step 2 - Process results based on previous step>",
         "3. <Step 3 - Perform next action>",
@@ -83,7 +84,7 @@ def askOllamaDS(questioinStr:str, dsModel:str, showTk=False):
         )
         # Extract data, remove the ds thinking info and return the response
         response = response["response"]
-        if showTk:
+        if not showTk:
             response = re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL)
             response = response.strip()
         return response
@@ -127,12 +128,15 @@ def main():
     user_input = TODO_PROMPT + requsetStr + RST_PROMPT
     response = askOllamaDS(user_input, DP_MODEL_NAME)
     print(" - result:\n %s" %str(response))
-    if not response: exit()
+    val = response.split('json',1)[-1]
+    response = val.replace('`', '')
+    #print(response)
     print("> Parse TodoList to browser task list")
     respData = json.loads(response)
-    initURL = respData['initUrl']
+    print("input:\n %s" %str(respData))
+    initURL = respData['initURL']
     tasksList = respData['tasksList']
-    rest = asyncio.run(main(initURL, tasksList))
+    rest = asyncio.run(browserCtrl(initURL, tasksList))
     print(" - result:\n %s")
 
 #-----------------------------------------------------------------------------
