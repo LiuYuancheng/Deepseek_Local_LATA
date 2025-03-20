@@ -1,0 +1,21 @@
+# This is the config file template for the module <dsBrowserCtrlAgent.py>
+# Setup the parameters with below format (every line follow <key>:<val> format, the
+# key can not be changed):
+
+#-----------------------------------------------------------------------------
+# GPU node IP address which provide the ollama service.
+OLLAMA_HOST_IP:
+
+#-----------------------------------------------------------------------------
+# The deepseek model name we want to use
+DP_MODEL_NAME:
+
+#-----------------------------------------------------------------------------
+# The deepseek CTX number name we want to use, # for deepseek-r1:7b and 8b use 
+# 6000, for higher model use 32000
+NUM_CTX:
+
+#-----------------------------------------------------------------------------
+# the user request string such as Use google search 'deepseek', go to its web 
+# and summarize the web contents in 100 words
+USER_REQUEST:

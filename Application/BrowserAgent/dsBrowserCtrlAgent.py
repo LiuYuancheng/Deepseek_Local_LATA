@@ -4,7 +4,7 @@
 #
 # Purpose:     This module is a simple MCP agent example program use the 'browser-use'
 #              library and link to local/lan deepseek-r1 service to help use control the 
-#              browswer to finish some task or generate the traffic. Such as open google 
+#              browser to finish some task or generate the traffic. Such as open google 
 #              and search deepseek then go to the official web and summarize the contents 
 #              in 500 words.
 #

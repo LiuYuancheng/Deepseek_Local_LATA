@@ -164,43 +164,55 @@ This design ensures a structured, automated, and accurate approach to executing 
 
 This agent can be further expanded to support different AI models, customized browsing automation, and multi-step reasoning tasks based on user-defined scenarios.
 
+
+
 ------
 
+### Environment Introduction and Setup
 
+#### Environment Over View
 
-### Environment Introduction and setup
+In this test environment setup, we configured a **Local Area Network (LAN)** with at least two types of machines:
 
-Assume we have 2 or more machines in a LAN, one GPU computer and multiple normal Laptop. Now we want to create an AI Agent which can help control the browser on the Laptop and the GPU computer. The network topology is shown below:
+1. **A GPU-powered server** hosting the DeepSeek service.
+2. **Multiple standard laptops** running browser control agents.
+
+The AI agent will be responsible for **controlling browsers** on the laptops, and the network topology is illustrated below:
 
 ![](img/s_03.png)
 
-To setup the environment we need to setup Deepseek service on the GPU server and open for the other LAN nodes. Then we install the agent on the operating Laptops. Configuration:
+To establish this environment, we need to do the following setup and the configuration is shown below :
+
+- Deploy the DeepSeek service on the GPU server.
+- Install and configure browser control agents on the laptops.
 
 | VM name          | IP address     | Hardware spec            | OS          | Program                 | Human Language Requests                                      |
 | ---------------- | -------------- | ------------------------ | ----------- | ----------------------- | ------------------------------------------------------------ |
 | Local GPU server | 192.168.50.12  | Intel-i5, 32GB, RTX-3060 | Windows- 11 | Ollama [deepseek-r1:8b] | N.A                                                          |
 | Laptop01         | 192.168.50.112 | Intel-i5, 16GB, RTX-1060 | Windows- 11 | Browser Control Agent   | Google search deepseek and summarize the product features in 500 words. |
-| Laptop02         | 192.168.50.113 | Intel-i5, 16GB, no GPU   | Windows- 11 | Browser Control Agent   | Find the project “**[Deepseek_Local_LATA](https://github.com/LiuYuancheng/Deepseek_Local_LATA)**” and open the readme file, summarize the project in 100 words. |
+| Laptop02         | 192.168.50.113 | Intel-i5, 16GB, no GPU   | Windows- 11 | Browser Control Agent   | Find the project "Deepseek_Local_LATA" and open the readme file, summarize the project in 100 words. |
 
 
 
-#### Configure the DeepSeek Service on GPU Node
+#### Setting Up the DeepSeek Service on the GPU Server
 
-On the GPU server, follow below steps to setup the deepseek service with the Ollama and make it open to other nodes in the subnet. 
+The GPU server must run DeepSeek-R using Ollama and expose it to LAN nodes.
 
-##### Step 1 Install Ollama
+##### Step 1 : Install Ollama LLM Service
 
-Download **Ollama** from the official website: https://ollama.com/download, and select the installation package for your operating system. 
+Download **Ollama** from the official site: https://ollama.com/download and select the appropriate package for your OS and install it.
 
 ##### Step 2 Download and Run DeepSeek-R
 
-For my local configuration, I use a 3060GPU(12GB), so I can try the 8b. We can use the `ollama pull to down load the model`  or just use the run command, if the module is not download, Ollama will auto download it:
+Since our GPU server has an RTX 3060 (12GB), we use the 8B model. Run the following command to download and launch DeepSeek-R:8b :
 
 ```
 ollama run deepseek-r1:8b
 ```
 
-##### Step 3 Expose the DeepSeek service to LAN
+To check the biggest model your GPU can run, you can refer to this link: https://www.linkedin.com/pulse/deploying-deepseek-r1-locally-custom-rag-knowledge-data-yuancheng-liu-uzxwc
+
+##### Step 3: Expose DeepSeek Service to LAN
 
 **Setting environment variables on Mac**
 
@@ -254,32 +266,73 @@ On Windows, Ollama inherits your user and system environment variables.
 
 #### Configure the Agent on Operation Node
 
-The operation node need to install a browser and python (>=3.11), then install the related lab.
+Each operation node laptop requires: A modern web browser , Python 3.11 or higher, Required and Python libraries installed.
 
-##### Step1 :  Install the python lib
+##### Step 1 : Install Required Python Libraries
 
-Install the langchain-ollama 0.2.3 with pip
+Install Ollama and LangChain support:
 
 ```
 pip install ollama
 pip install langchain-ollama
 ```
 
-Install the lib browser-use with pip
+Install the browser automation library:
 
 ```
 pip install browser-use
 ```
 
-Install the playwright 
+Install Playwright for browser control:
 
 ```
 playwright install
 ```
 
+##### Step 2: Configure Agent Parameters
+
+Each laptop runs a browser control agent that interacts with DeepSeek, download the file `dsBrowserCtrlAgent.py` , `dsBrowserCtrlConfig.txt` and `ConfigLoader.py` to the operation node. 
+
+Set up the deepseek service configuration  `dsBrowserCtrlConfig.txt` based on the GPU node and the model running:
+
+```
+# This is the config file template for the module <dsBrowserCtrlAgent.py>
+# Setup the parameters with below format (every line follow <key>:<val> format, the
+# key can not be changed):
+#-----------------------------------------------------------------------------
+# GPU node IP address which provide the ollama service.
+OLLAMA_HOST_IP:192.168.50.12
+#-----------------------------------------------------------------------------
+# The deepseek model name we want to use.
+DP_MODEL_NAME:deepseek-r1:8b
+#-----------------------------------------------------------------------------
+# The deepseek CTX number name we want to use, # for deepseek-r1:7b and 8b use 
+# 6000, for higher model use 32000
+NUM_CTX:6000
+```
+
+Then add the request to the `USER_REQUEST` parameter as shown below then start:
+
+```
+#-----------------------------------------------------------------------------
+# the user request string such as Use google search 'deepseek', go to its web 
+# and summarize the web contents in 100 words
+USER_REQUEST:Use google search 'deepseek', go to its web and summarize the web contents in 100 words
+```
 
 
-##### Step2 : Configure the agent parameters
+
+##### Step 3: Run the MCP Agent
+
+Then execute the agent with below command and collect the result.
+
+```
+python dsBrowserCtrlAgent.py
+```
+
+The agent will Connect to the GPU server which running DeepSeek, perform browser interactions (e.g., searching, clicking, summarizing) and return the processed output ased on the request.
+
+
 
 
 
