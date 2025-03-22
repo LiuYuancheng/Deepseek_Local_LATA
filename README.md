@@ -48,6 +48,16 @@ This application provides a user-friendly interface for remote access to multipl
 
 Project Link : [Jump to the project folder](Testing/1_Simple_Flask_Deepseek_ChatBot)
 
+
+
+#### MCP Agent with Local/LAN DeepSeek Service for Browser Control
+
+The project is aimed to create a AI-driven Model Context Protocol (MCP) Agent that can help user to operate a web browser to complete tasks or generate network traffic based on human language instructions. This is achieved using the powerful [browser-use](https://github.com/browser-use/browser-use) library in combination with a Local/LAN configured DeepSeek LLM module service.
+
+![](doc/img/s_05.png)
+
+
+
 ------
 
 > last edit by LiuYuancheng (liu_yuan_cheng@hotmail.com) by 28/02/2025 if you have any question , please send me a message. 

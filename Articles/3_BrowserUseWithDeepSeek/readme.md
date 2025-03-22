@@ -4,7 +4,7 @@ In this article, we explore how to build an AI-driven Model Context Protocol (MC
 
 We will Introduce step by step through setting up the **Ollama DeepSeek-R1 Service** in a local LAN environment, link it with the MCP Agent, and integrate with browser automation. Since the DeepSeek model runs locally, you won't have to worry about the "deepseek service busy" issues and the token fees. Additionally, this setup allows for testing various models or including customized fine-tuned DeepSeek versions to compare the performance of different models.
 
-This article will cover the following sections:
+![](img/title.png)This article will cover the following sections:
 
 - **Agent Test Scenario Introduction** – Overview of use cases with the demo.
 - **Agent Operation Detailed Design** – Technical introduction of how the MCP Agent interacts with the browser.
@@ -21,6 +21,27 @@ This article will cover the following sections:
 **Table of Contents**
 
 [TOC]
+
+- [Creating an MCP Agent with Local/LAN DeepSeek Service for Browser Control](#creating-an-mcp-agent-with-local-lan-deepseek-service-for-browser-control)
+    + [MCP Agent Task Scenarios](#mcp-agent-task-scenarios)
+      - [Scenario 1: General Information Search & Summarization](#scenario-1--general-information-search---summarization)
+      - [Scenario 2: Targeted Web Content Extraction & Summarization](#scenario-2--targeted-web-content-extraction---summarization)
+    + [MCP Agent Operation Detailed Design](#mcp-agent-operation-detailed-design)
+      - [Background: Model Context Protocol (MCP)](#background--model-context-protocol--mcp-)
+      - [Agent Workflow Overview](#agent-workflow-overview)
+        * [Step 1: Add Scenario Prompt & Generate a To-Do List](#step-1--add-scenario-prompt---generate-a-to-do-list)
+        * [Step 2: Agent Interact with the Host's Browser](#step-2--agent-interact-with-the-host-s-browser)
+    + [Environment Introduction and Setup](#environment-introduction-and-setup)
+      - [Environment Over View](#environment-over-view)
+      - [Setting Up the DeepSeek Service on the GPU Node](#setting-up-the-deepseek-service-on-the-gpu-node)
+        * [Step 1 : Install Ollama LLM Service](#step-1---install-ollama-llm-service)
+        * [Step 2 Download and Run DeepSeek-R](#step-2-download-and-run-deepseek-r)
+        * [Step 3: Expose DeepSeek Service to LAN](#step-3--expose-deepseek-service-to-lan)
+      - [Configure the Agent on Operation Node](#configure-the-agent-on-operation-node)
+        * [Step 1 : Install Required Python Libraries](#step-1---install-required-python-libraries)
+        * [Step 2: Configure Agent Parameters](#step-2--configure-agent-parameters)
+        * [Step 3: Run the MCP Agent](#step-3--run-the-mcp-agent)
+    + [Test Result Summary and Conclusion](#test-result-summary-and-conclusion)
 
 ------
 
@@ -87,8 +108,8 @@ By managing resources with URI-based access patterns and supporting capability n
 The agent workflow is very simple as shown below and it operates in three primary steps:
 
 - Step 1: Add Scenario Prompt & Generate a To-Do List.
-- Step 2: Interact with the Browser.
-- Step 3: Generate the Final Summary.
+- Step 2: Interact with the Browser and analyze the page contents.
+- Step 3: Generate the Final Summary/Result and verify tasks finished.
 
 ![](img/s_05.png)
 
@@ -345,13 +366,15 @@ python dsBrowserCtrlAgent.py
 
 The agent will Connect to the GPU server which running DeepSeek-R1, perform browser interactions (e.g., searching, clicking, summarizing) and return the processed output based on the request.
 
-
+Code link: https://github.com/LiuYuancheng/Deepseek_Local_LATA/tree/main/Application/BrowserAgent
 
 ------
 
 ### Test Result Summary and Conclusion
 
-During the test we tried to use 4 different found that the model size effect a lot about the final result and the task finish speed: 
+During the evaluation, we tested four different DeepSeek model sizes to analyze their impact on task completion  and execution speed. The test involved executing a series of browser-based tasks, including searching for a specific project, selecting relevant links, reading content, and summarizing information.
+
+Below is a tasks result of the scenario 2: 
 
 | Function \ Deepseek model                                    | deepseek-r1:1.5b | deepseek-r1:7b | deepseek-r1:8b | deepseek-r1:14b |
 | ------------------------------------------------------------ | ---------------- | -------------- | -------------- | --------------- |
@@ -362,13 +385,24 @@ During the test we tried to use 4 different found that the model size effect a l
 | 4. Select README.md file link and scroll down                | Failed           | Failed         | Finished       | Finished        |
 | 5. Base on the readme content in the link, summarize the contents in 100 words | Failed           | Failed         | Finished       | Finished        |
 
-And for the simple task, minimum a deepseek-r1:8b is required if you want to implement more complex task, we need to use 14b model and the bigger model will get much better performance.  
+During the test, there are some observation: 
 
+- **Basic Task Completion**: All models, including the smallest (1.5B), successfully performed simple actions such as generating a to-do list and clicking the search icon.
+- **Search and Navigation**: Models below 7B struggled with executing keyword searches and selecting relevant links.
+- **Content Processing**: A minimum of 8B was required to read and summarize a README file effectively.
+- **Performance Scaling**: The **14B model** demonstrated superior performance, completing all tasks without failure and ensuring better execution speed and accuracy.
 
+**Conclusion** : 
 
-This design ensures a structured, automated, and accurate approach to executing browser-based tasks with an MCP-powered AI agent. By integrating local DeepSeek LLM processing, users benefit from lower latency, cost efficiency, and customization flexibility compared to cloud-based solutions.
+The test results highlight that model size significantly impacts task success rate and execution efficiency. The **8B model** is the minimum viable option for basic browsing tasks, while the bigger than 14B model is recommended for handling more complex, multi-step processes with higher accuracy and reliability.
 
+This design ensures a structured, automated, and accurate approach to executing browser-based tasks using an MCP-powered AI agent. By integrating local DeepSeek LLM processing, users benefit from:
 
+- **Lower latency** compared to cloud-based solutions.
+- **Cost efficiency** by eliminating dependency on external APIs.
+- **Customization flexibility** for tailored AI-driven automation.
+
+For users seeking **higher accuracy and robust execution**, investing in **larger DeepSeek models (14B and above)** is recommended to maximize performance and reliability in AI-driven browser task automation.
 
 ------
 
