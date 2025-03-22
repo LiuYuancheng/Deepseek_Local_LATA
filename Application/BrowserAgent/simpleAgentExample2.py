@@ -69,8 +69,8 @@ if __name__ == '__main__':
     initURL = "https://github.com/"
     tasksList = [ "1. Click the search icon(magnifier) at the top of the page.",
                   "2. Type in 'Deepseek_Local_LATA' in th search bar.",
-                  "2. Select the link LiuYuancehng/Deepseek_Local_LATA in the result",
-                  "3. Select README.md file link and scroll down"
-                  "4. Base on the readme content in the link, summarize the contents in 100 words"
+                  "3. Select the link LiuYuancehng/Deepseek_Local_LATA in the result",
+                  "4. Select README.md file link and scroll down"
+                  "5. Base on the readme content in the link, summarize the contents in 100 words"
                  ]
     asyncio.run(main(initURL, tasksList))
