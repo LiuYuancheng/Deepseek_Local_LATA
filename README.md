@@ -56,7 +56,7 @@ The project is aimed to create a AI-driven Model Context Protocol (MCP) Agent th
 
 ![](doc/img/s_05.png)
 
-
+Project Link : [Jump to the project folder](Application/BrowserAgent)
 
 ------
 
