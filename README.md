@@ -6,7 +6,7 @@
 - **Testing (T):** A suite of simple test programs aimed at exploring different technologies, such as prompt engineering and retrieval-augmented generation (RAG) with DeepSeek.
 - **Application (A):** Practical source code implementations demonstrating how DeepSeek can be integrated into real-world applications to assist users in various tasks.
 
-```
+```python
 # Author:      Yuancheng Liu
 # Created:     2025/02/23
 # version:     v_0.0.1

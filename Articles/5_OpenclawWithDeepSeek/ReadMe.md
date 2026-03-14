@@ -62,13 +62,34 @@ To improve security and avoid directly exposing the LLM service to the public ne
 
 ### 2. Setting Up the OpenClaw Compatible Open-source LLM on GPU
 
-All the setups in this section need to do on the GPU server.
+All the configurations in this section should be performed on the **GPU server** that will host the Large Language Model (LLM). 
 
-First we need to setup the OpenClaw Compatible LLM on your GPU server. We can easilty use the Ollama to setup the LLM on your server. 
+To run OpenClaw locally without relying on cloud APIs, we first need to deploy a compatible open-source LLM. One of the easiest ways to manage and run LLMs locally is by using **Ollama**, which provides a lightweight runtime for downloading, managing, and serving open-source LLMs with a simple command-line interface.
 
-To download all install the Ollama, you can go to the download page https://ollama.com/download/linux and follow installation command based on your OS type.
+#### 2.1 Install Ollama on the GPU Server
 
-Once the install finished we need to check what kinds of opensource LLM model the openclaw can use, below is the table:
+To install Ollama on your GPU server. You can download it from the official page:https://ollama.com/download/linux
+
+For most Linux systems, the installation can be completed using: 
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+After installation, verify that the service is working and start the service
+
+```
+ollama --version
+ollama serve
+```
+
+Ollama will expose a **local API endpoint** (default port `11434`) that OpenClaw agents can later connect to.
+
+#### 2.2 Pull OpenClaw Compatible Open-Source Models
+
+OpenClaw supports multiple open-source LLMs as long as they provide tool-calling and reasoning capabilities. Through Ollama, users can easily deploy a variety of models depending on their available GPU resources.
+
+Below is a reference table of commonly used models compatible with OpenClaw:
 
 | **Model Name**       | **Parameter Size** | **Best Use Case**                        | **Context Window** | **Recommended Hardware**            |
 | -------------------- | ------------------ | ---------------------------------------- | ------------------ | ----------------------------------- |
@@ -81,33 +102,42 @@ Once the install finished we need to check what kinds of opensource LLM model th
 | **Qwen 3.5 (14B)**   | 14B                | Entry-level local agent tasks            | 64K                | RTX 3060/4070 (12GB+ VRAM)          |
 | **MiMo-V2-Flash**    | ~30B (Active)      | Ultra-fast "thinking" & long research    | 256K               | RTX 4080/4090                       |
 
-You can also check in the Ollama's model download page to check the "Application" tag to see whether the module is available for using by the OpenClaw as shown below:
+You can also browse compatible models directly from the Ollama model repository. On the Ollama website, check the Application tag to verify whether a model supports OpenClaw tool-calling functionality as shown below:
 
 ![](img/s_05.png)
 
-Now we can pull the related model in the GPU server, as I use RTX3060 and A5000, so I use the Qwen3.5-35B-A3B-FP8 and deepseek-r1-tool-calling:14b. 
+#### 2.3 Downloading the LLM Model
 
-Pull the Qwen3.5-35B-A3B-FP8
+In this experiment, the GPU server is equipped with **RTX 3060** and **RTX A5000** GPUs. Therefore, two models were selected:
+
+- **Qwen3.5-35B-A3B-FP8** for high-quality reasoning
+- **DeepSeek-R1-Tool-Calling-14B** for lightweight tool-calling tasks
+
+Pull and run the Qwen3.5-35B-A3B-FP8
 
 ```
 ollama pull qwen3.5:35b
 ollama run qwen3.5:35b
 ```
 
-Pull the deepseek-r1-tool-calling:14b model:
+Pull and run the deepseek-r1-tool-calling:14b model:
 
 ```
 ollama pull MFDoom/deepseek-r1-tool-calling:14b
 ollama run deepseek-r1-tool-calling:14b
 ```
 
-After install success,The Ollama service should be running in the background. You can verify it by running `ollama serve` in a terminal or using the desktop application. 
+Once the models are downloaded, Ollama will automatically load them when they are first called through the API.
 
-When ollama API is called, the model will be auto loaded and use, on Linux machine you can also create a service to make the model always running so the 1st API call will be fast:
+#### 2.4 Running the Model as a Background Service(optional)
 
-```python
+After installation, the Ollama service typically runs in the background. When an API request is sent to the Ollama endpoint, the required model will automatically be loaded into GPU memory.  The first API request may take longer because the model must be initialized. To reduce this latency, you can configure the model to run as a **persistent service**.
+
+On Linux systems, a simple **systemd service** can be created to keep the model loaded, as example is shown below:
+
+```bash
 [Unit]
-Description=DeepSeek14B_service
+Description=ollamaQwen35B_service
 After=network.target
 [Service]
 ExecStart=ollama run qwen3.5:35b
@@ -121,51 +151,91 @@ StandardError=null
 WantedBy=multi-user.target
 ```
 
+The copy the file `ollamaQwen35B_service.service` to the `/etc/systemd/system` director and start the service: 
+
+```
+sudo systemctl start ollamaQwen35B_service
+```
+
+After completing this step, the GPU server will host a locally running LLM inference service.
+
 
 
 ------
 
-### 3. Forward the Ollama LLM Service to the User
+### 3. Forward the Ollama LLM Service to the User's Computer
 
-All the setups in this section need to do on the GPU server.
+All the configurations in this section should be performed on the computer or laptop where the OpenClaw agent will be installed.
 
-After the ollama setup, you can can create a user which only used for forwarding the traffic, assume the user I create is `llmService`, Now in the computer or laptop you want to setup the openClaw you need to run the port forward command, if the computer and your GPU host are in the same subnet,
+Instead of exposing the Ollama API directly to the network (which may introduce security risks), we can use SSH port forwarding to securely tunnel the service to the local machine, so the OpenClaw agent running on a user’s laptop or workstation can interact with the LLM service as if it were running locally.
+
+For security and access control, it is recommended to create a **dedicated user account** on the GPU server that will only be used for forwarding the LLM service traffic, for example I create a normal user `llmService` on the GPU. 
+
+#### 3.1 Create an SSH Port Forwarding Tunnel
+
+On the **target computer or laptop** where OpenClaw will run, execute the following SSH command to create a tunnel between the local machine and the GPU server.
+
+If both machines are located in the **same subnet or internal network**, run:
 
 ```bash
-ssh -L localhost:11434:localhost:11434 llmService@<GPU_Server_Ip_Address>
+ssh -L localhost:11434:localhost:11434 llmService@<GPU_Server_IP_Address>
 ```
 
-Now we need to test weather you can use the ollama service normally with the curl command: 
+This command creates a secure tunnel that maps:
 
-```bash
+```
+Local Computer:   localhost:11434
+        │
+        │ (SSH Tunnel)
+        ▼
+GPU Server:       localhost:11434 (Ollama API)
+```
+
+#### 3.3 Test the Ollama API Connection
+
+Once the SSH tunnel is established, you can verify the connection by sending a test request to the Ollama API.
+
+Linux / macOS
+
+```
 curl http://localhost:11434/api/chat -d "{\"model\":\"qwen3.5:9b\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello!\"}]}"
 ```
 
-or Win PowerShell:
+Windows PowerShell
 
-```powershell
+```
 curl.exe http://localhost:11434/api/chat -d '{"model":"qwen3.5:9b","messages":[{"role":"user","content":"Hello!"}]}'
 ```
 
-If there is some repose show up, which means your computer can use the GPU LLM service correctly:
+If the connection is working correctly, the API will return a JSON response generated by the LLM model as shown below:
 
 ![](img/s_06.png)
 
-If you want to connect from the internet or subnet outside the network GPU in with as jump host, on the 
+#### 3.4 Connecting Through a Jump Host (Optional)
+
+In some environments, the GPU server may reside inside a **restricted internal network** and cannot be accessed directly from the user’s computer. In this case, a **jump host (bastion server)** can be used to relay the SSH connection.
+
+On the target computer, run the following command:
+
+```
+ssh -L localhost:11434:localhost:11434 -J <jumphostUser>@<Jump_Host_IP> llmService@<GPU_Server_Ip_Address>
+```
+
+This creates the following connection path:
+
+```
+User Computer
+      │
+      ▼
+Jump Host (SSH Gateway)
+      │
+      ▼
+GPU Server (Ollama LLM Service)
+```
 
 
 
-
-
-
-
-
-
-curl http://localhost:11434/api/chat  -d '{"model":"qwen3.5:9b","messages":[{"role":"user","content":"Hello!"}]}'
-
-
-
-
+------
 
 
 
