@@ -237,25 +237,130 @@ GPU Server (Ollama LLM Service)
 
 ------
 
+### 4. Setup the OpenClaw on the User Comptuer 
 
+All the configurations in this section should be performed on the computer or laptop where the OpenClaw agent will be installed.
 
+The openclaw need node.js >22, so we need to install the nodejs first, go to the nodejs download page, download the package and install based on the user computer's OS type. 
 
+After hte nodejs installed, we can follow the steps in the openclaw wiki's installation step to setup the open claw on you computerhttps://docs.openclaw.ai/start/getting-started#macos%2Flinux
 
+For example on my WSL:
 
+```
+curl -fsSL https://openclaw.ai/install.sh | bash
+```
 
+During the installation as we will use the LLM in the local network, so we will select "skip" of the "Model/auth provider" section setup. for the skills configuration can select no or skip as shown below:
 
+```
+◇  Configure skills now? (recommended)
+│  Yes
+│
+◇  Install missing skill dependencies
+│  Skip for now
+│
+◇  Set GOOGLE_PLACES_API_KEY for goplaces?
+│  No
+│
+◇  Set GEMINI_API_KEY for nano-banana-pro?
+│  No
+│
+◇  Set NOTION_API_KEY for notion?
+│  No
+│
+◇  Set OPENAI_API_KEY for openai-image-gen?
+│  No
+│
+◇  Set OPENAI_API_KEY for openai-whisper-api?
+│  No
+│
+◇  Set ELEVENLABS_API_KEY for sag?
+│  No
+```
 
+Run the onboarding wizard
 
+```
+openclaw onboard --install-daemon
+```
 
+Then we wait all the steps finished.
 
+Now we need to change the openclaw configuration file to link it to our LLM model:
 
+Edit the config file: Open `~/.openclaw/openclaw.json` and add the Ollama provider and model details, ensuring you use the native Ollama API URL (`http://localhost:11434`) and not the `/v1` OpenAI-compatible URL, add the contents as shown blow(in the example I use the Qwen3.5 35B)
 
+```
+{
+  "models": {
+    "providers": {
+      "ollama": {
+        "baseUrl": "http://localhost:11434",
+        "apiKey": "ollama-local",
+        "api": "ollama-chat",
+        "models": [
+          {
+            "id": "ollama/qwen3.5:35b",
+            "name": "qwen3.5:35b",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 128000,
+            "maxTokens": 8000
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "ollama/qwen3.5:35b"
+      }
+    }
+  }
+}
+```
 
+Save the file and **Restart the OpenClaw gateway:** Apply the configuration changes by restarting the OpenClaw gateway service.
 
+```
+openclaw gateway restart
+```
 
+Then use the `openclaw dashboard` command to check you token: 
 
+```
+◇  How do you want to hatch your bot?
+│  Open the Web UI
+│
+◇  Dashboard ready ────────────────────────────────────────────────────────────────╮
+│                                                                                  │
+│  Dashboard link (with token):                                                    │
+│  http://127.0.0.1:18789/#token= <record your token in a file> │
+│  Copy/paste this URL in a browser on this machine to control OpenClaw.           │
+│  No GUI detected. Open from your computer:                                       │
+│  ssh -N -L 18789:127.0.0.1:18789 xxxx@192.168.50.10                               │
+│  Then open:                                                                      │
+│  http://localhost:18789/                                                         │
+│  http://localhost:18789/#token=<record your token in a file> │
+│  Docs:                                                                           │
+│  https://docs.openclaw.ai/gateway/remote                                         │
+│  https://docs.openclaw.ai/web/control-ui  
+```
 
+**Verify the connection:** Run the following command to check if OpenClaw has successfully recognized your Ollama model.
 
+```
+openclaw doctor --fix
+# Or list all recognized models
+openclaw models list
+```
+
+Now open the url  `http://localhost:18789/#token=<record your token in a file>` with your token then you will see the open claw dashboard and the chat page as shown below. If the heath indicator on the top is green, then it is ready for using,  you can ask what LLM it is using: 
+
+![](img/s_08.png)
 
 
 
