@@ -233,25 +233,44 @@ Jump Host (SSH Gateway)
 GPU Server (Ollama LLM Service)
 ```
 
+Once the tunnel is established, the Ollama service will still be accessible locally via:
+
+```
+http://localhost:11434
+```
+
 
 
 ------
 
-### 4. Setup the OpenClaw on the User Comptuer 
+### 4. Setup the OpenClaw on the User Computer
 
 All the configurations in this section should be performed on the computer or laptop where the OpenClaw agent will be installed.
 
-The openclaw need node.js >22, so we need to install the nodejs first, go to the nodejs download page, download the package and install based on the user computer's OS type. 
+#### 4.1 Install Node.js
 
-After hte nodejs installed, we can follow the steps in the openclaw wiki's installation step to setup the open claw on you computerhttps://docs.openclaw.ai/start/getting-started#macos%2Flinux
+OpenClaw requires Node.js version 22 or above. Therefore, the first step is to install Node.js on the user computer. Download the installer from the official website: https://nodejs.org/en/download
 
-For example on my WSL:
+Install the appropriate package based on your operating system (Windows, Linux, or macOS) and after installation, verify that Node.js is correctly installed:
 
+```bash
+node -v
+npm -v
 ```
+
+#### 4.2 Install OpenClaw
+
+Next, install **OpenClaw** by following the official installation guide: https://docs.openclaw.ai/start/getting-started
+
+For Linux, macOS, or WSL environments, the installation can be performed using the following command:
+
+```bash
 curl -fsSL https://openclaw.ai/install.sh | bash
 ```
 
-During the installation as we will use the LLM in the local network, so we will select "skip" of the "Model/auth provider" section setup. for the skills configuration can select no or skip as shown below:
+#### 4.3 Skip OpenClaw Cloud Model Configuration
+
+During installation, OpenClaw will ask whether you want to configure model providers or external service integrations for the skills. As the deployment uses a locally hosted LLM via Ollama, these cloud-based configurations can be skipped. Example installation prompts:
 
 ```
 ◇  Configure skills now? (recommended)
@@ -279,19 +298,27 @@ During the installation as we will use the LLM in the local network, so we will 
 │  No
 ```
 
-Run the onboarding wizard
+Once the installation is complete, run the onboarding wizard:
 
-```
+```bash
 openclaw onboard --install-daemon
 ```
 
-Then we wait all the steps finished.
+#### 4.4 Configure OpenClaw to Use the Local Ollama Model
 
-Now we need to change the openclaw configuration file to link it to our LLM model:
+Next, modify the OpenClaw configuration file so that it uses the Ollama service forwarded from the GPU server.
 
-Edit the config file: Open `~/.openclaw/openclaw.json` and add the Ollama provider and model details, ensuring you use the native Ollama API URL (`http://localhost:11434`) and not the `/v1` OpenAI-compatible URL, add the contents as shown blow(in the example I use the Qwen3.5 35B)
+Edit the configuration file:
 
 ```
+~/.openclaw/openclaw.json
+```
+
+Add the Ollama provider configuration as shown below.
+
+Note that the native Ollama API endpoint (`http://localhost:11434`) should be used instead of the OpenAI-compatible `/v1` endpoint. Example configuration (using the Qwen3.5 35B model):
+
+```json
 {
   "models": {
     "providers": {
@@ -323,13 +350,27 @@ Edit the config file: Open `~/.openclaw/openclaw.json` and add the Ollama provid
 }
 ```
 
-Save the file and **Restart the OpenClaw gateway:** Apply the configuration changes by restarting the OpenClaw gateway service.
+After saving the configuration file, restart the OpenClaw gateway service to apply the new settings:
 
-```
+```bash
 openclaw gateway restart
 ```
 
-Then use the `openclaw dashboard` command to check you token: 
+To verify that OpenClaw can correctly access the Ollama model, run:
+
+```
+openclaw doctor --fix
+# Or list all recognized models
+openclaw models list
+```
+
+Then you can now launch the OpenClaw dashboard:
+
+```
+openclaw dashboard
+```
+
+The system will generate a dashboard URL containing an authentication token as shown below:
 
 ```
 ◇  How do you want to hatch your bot?
@@ -350,31 +391,81 @@ Then use the `openclaw dashboard` command to check you token:
 │  https://docs.openclaw.ai/web/control-ui  
 ```
 
-**Verify the connection:** Run the following command to check if OpenClaw has successfully recognized your Ollama model.
+Open this URL in your browser to access the OpenClaw web interface.
 
 ```
-openclaw doctor --fix
-# Or list all recognized models
-openclaw models list
+http://127.0.0.1:18789/#token=<your_token>
 ```
 
-Now open the url  `http://localhost:18789/#token=<record your token in a file>` with your token then you will see the open claw dashboard and the chat page as shown below. If the heath indicator on the top is green, then it is ready for using,  you can ask what LLM it is using: 
+If the OpenClaw host does not have a graphical interface, you can access the dashboard using SSH port forwarding:
+
+```
+ssh -N -L 18789:127.0.0.1:18789 <user>@<openclaw_host_ip>
+```
+
+Then open the following URL on your local computer: `http://localhost:18789` and you will see the OpenClaw dashboard page:
 
 ![](img/s_08.png)
 
+If the "health indicator" at the top of the dashboard shows green, the system is ready for use.
+
+#### 4.5 Optional: Integrating OpenClaw with Telegram
+
+To control OpenClaw remotely, you can integrate it with **Telegram**.
+
+First, open Telegram and start a chat with `@BotFather` ,  Run `/newbot` (or `/mybots`)  and Copy the token (looks like 123456:ABC...)  as shown below:
+
+![](img/s_07.png)
+
+Copy this token and add it to the OpenClaw configuration file `~/.openclaw/openclaw.json` as shown below:
+
+![](img/s_09.png)
+
+After updating the configuration, send a message to the bot. Initially, the bot will not respond because the device must be paired. You will get the below access not configured example:
+
+![](img/s_10.png)
+
+And in your OpenClaw server you will see your message is pending for approval as shown below:
+
+![](img/s_12.png)
+
+To approve the connection, run the following commands on the OpenClaw host:
+
+```
+openclaw pairing list telegram
+openclaw pairing approve telegram <YOUR_PAIRING_CODE>
+```
+
+After approving the pairing code, the Telegram bot will be able to communicate with your OpenClaw agent and assign tasks remotely. Then you can start to use the telegram to assign tasks to your OpenClaw as shown below:
+
+![](img/s_11.png)
 
 
 
+After completing these steps, the OpenClaw agent running on the user’s computer will be connected to the **GPU-hosted LLM service** and can be controlled through the web dashboard or Telegram.
 
-https://blog.csdn.net/u010026928/article/details/158582591
+------
 
-https://www.nvidia.com/en-sg/products/workstations/dgx-spark/
+### 5. Summery And Reference: 
 
-https://news.hubeidaily.net/pc/c_5240661.html
 
-https://www.pingwest.com/w/311980
 
-https://xueqiu.com/5680323216/377215813
+#### 5.2 Reference
 
-https://www.bilibili.com/video/BV1vdwczDEoR/?spm_id_from=333.1007.tianma.2-1-4.click&vd_source=5ff50dfdd1613df97004d3548592e433
+- https://blog.csdn.net/u010026928/article/details/158582591
 
+- https://www.nvidia.com/en-sg/products/workstations/dgx-spark/
+
+- https://news.hubeidaily.net/pc/c_5240661.html
+
+- https://www.pingwest.com/w/311980
+
+- https://xueqiu.com/5680323216/377215813
+
+- https://www.bilibili.com/video/BV1vdwczDEoR/?spm_id_from=333.1007.tianma.2-1-4.click&vd_source=5ff50dfdd1613df97004d3548592e433
+
+
+
+------
+
+>  last edit by LiuYuancheng (liu_yuan_cheng@hotmail.com) by 15/03/20256if you have any problem, please send me a message. 
