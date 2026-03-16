@@ -1,12 +1,12 @@
-# Deploy Multiple OpenClaw AI Assistant Cluster With Local GPU Running Qwen3.5 or DeepSeek-r1
+# Deploy Multiple OpenClaw AI Assistants Cluster With Local GPU Running Qwen3.5 or DeepSeek-r1
 
-**Project Design Purpose** : In this article, I will share the design and deployment of a distributed multiple OpenClaw AI assistants cluster connected to locally hosted Large Language Models (LLMs) running on a GPU-enabled server or gaming laptop.  Instead of relying on cloud-based AI APIs. I used the open-source models such as `Qwen 3.5` or `DeepSeek-R1` to provide inference services for multiple OpenClaw agents, so we can reduces cloud AI token costs and compare the performance of different LLM model.
+**Project Design Purpose** : In this article, I will share the design and deployment of a distributed multiple OpenClaw AI assistants cluster connected to one or two locally hosted Large Language Models (LLMs) running on one GPU-enabled server or gaming laptop. Instead of relying on using the cloud-based AI APIs. I used the open-source models such as `Qwen 3.5` or `DeepSeek-R1` to provide inference services for multiple OpenClaw agents, so we can reduces cloud AI token costs and compare the performance of different LLM models.
 
 In this AI Assistant Cluster System, the GPU server acts as the centralized AI reasoning engine, and the distributed agents (computers run OpenClaw communicate with the LLM server over the network) execute tasks, collect system information, and interact with the model for decision-making. This article covers the following three sections:
 
 - Setting up the open-source LLM model on a GPU server or gaming laptop/computer.
 - Configuring and exposing the LLM inference service so that it can be accessed by remote OpenClaw nodes.
-- Deploying OpenClaw agents on target computers or laptops and connecting them to the centralized LLM service
+- Deploying OpenClaw agents on target computers or laptops and connecting them to the centralized LLM service.
 
 ```python
 # Author:      Yuancheng Liu
@@ -20,25 +20,46 @@ In this AI Assistant Cluster System, the GPU server acts as the centralized AI r
 
 [TOC]
 
+- [Deploy Multiple OpenClaw AI Assistants Cluster With Local GPU Running Qwen3.5 or DeepSeek-r1](#deploy-multiple-openclaw-ai-assistants-cluster-with-local-gpu-running-qwen35-or-deepseek-r1)
+    + [1. Introduction](#1-introduction)
+      - [1.1 Abstract and Background](#11-abstract-and-background)
+      - [1.2 System Architecture](#12-system-architecture)
+    + [2. Setting Up the OpenClaw Compatible Open-source LLM on GPU](#2-setting-up-the-openclaw-compatible-open-source-llm-on-gpu)
+      - [2.1 Install Ollama on the GPU Server](#21-install-ollama-on-the-gpu-server)
+      - [2.2 Pull OpenClaw Compatible Open-Source Models](#22-pull-openclaw-compatible-open-source-models)
+      - [2.3 Downloading the LLM Model](#23-downloading-the-llm-model)
+      - [2.4 Running the Model as a Background Service(optional)](#24-running-the-model-as-a-background-service-optional-)
+    + [3. Forward the Ollama LLM Service to the User's Computer](#3-forward-the-ollama-llm-service-to-the-user-s-computer)
+      - [3.1 Create an SSH Port Forwarding Tunnel](#31-create-an-ssh-port-forwarding-tunnel)
+      - [3.3 Test the Ollama API Connection](#33-test-the-ollama-api-connection)
+      - [3.4 Connecting Through a Jump Host (Optional)](#34-connecting-through-a-jump-host--optional-)
+    + [4. Setup the OpenClaw on the User Computer](#4-setup-the-openclaw-on-the-user-computer)
+      - [4.1 Install Dependence Node.js](#41-install-dependence-nodejs)
+      - [4.2 Install OpenClaw AI Assistants](#42-install-openclaw-ai-assistants)
+      - [4.3 Skip the OpenClaw Cloud Model Configuration](#43-skip-the-openclaw-cloud-model-configuration)
+      - [4.4 Configure OpenClaw to Use the Local Ollama Model](#44-configure-openclaw-to-use-the-local-ollama-model)
+      - [4.5 Optional: Integrating OpenClaw with Telegram](#45-optional--integrating-openclaw-with-telegram)
+    + [5. Summery And Reference](#5-summery-and-reference)
+      - [5.1 Summary](#51-summary)
+      - [5.2 Reference](#52-reference)
+
 ------
 
 ### 1. Introduction
 
-In this project, the OpenClaw cluster design separates LLM inference services from agent execution nodes. A GPU-enabled server or gaming laptop inside the internal network hosts the LLM models through Ollama, which provides a lightweight local API service for running open-source models. Multiple computers or laptops running OpenClaw agents connect to this centralized LLM service to perform reasoning and task execution.
+In this project, the design of "OpenClaw-cluster" separates LLM inference services from agent execution nodes. A GPU-enabled server or gaming laptop inside the internal network hosts the LLM models through `Ollama` framework, which provides a lightweight local API service for running open-source models. So multiple computers or laptops running OpenClaw agents connect to this centralized LLM service to perform reasoning and task execution.
 
 #### 1.1 Abstract and Background 
 
-Over the past month, the personal AI assistant [OpenClaw](https://openclaw.ai/) has rapidly become one of the most discussed open-source AI projects. Its rapid rise in popularity has led to a wave of new services and businesses around the ecosystem. For example in China, many individuals and organizations now offer installation services, remote deployment support, and children training courses on how to use OpenClaw effectively. Some companies even market “all-in-one OpenClaw machines/Laptop” preinstalled with OpenClaw and local large language models. And the major technology companies such as **Tencent** have also begun offering related OpenClaw deployment services: 
+Over the past month, the personal AI assistant [OpenClaw](https://openclaw.ai/) has rapidly become one of the most discussed open-source AI projects. Its rapid rise in popularity has led to a wave of new services and businesses around the ecosystem. For example in China, many individuals and organizations now offer installation/uninstallation services, remote deployment support, and children training courses on how to use OpenClaw effectively. Some companies even market “all-in-one OpenClaw machines/Laptop” preinstalled with OpenClaw and local large language models. And the major technology companies such as Tencent has also begun offering related OpenClaw deployment services: 
 
 ![](img/s_03.png)
 
-One of the key reasons behind the rapid adoption of OpenClaw is its "skills" based architecture, which enables the agent to call multiple tools and reasoning steps dynamically when executing tasks. While this design significantly enhances the intelligence and automation capability of the AI assistant, it also dramatically increases the number of LLM API calls. As a result, token consumption can be tens or even hundreds of times higher than that of traditional single-prompt AI agents. If you don't need to do complex tasks and have a GPU server or station such as Nvidia GB10 Spark or a gaming laptop with RTX-series 50XX graphics cards, you can link your OpenClaw to the open source LLM like **Qwen 3.5** or **DeepSeek‑R1** running on these local machine to save the costs especially when you have several OpenClaw Agents running on different device.
-
-
+One of the key reasons behind the rapid adoption of OpenClaw is its "skills" based architecture, which enables the agent to call multiple tools and reasoning steps dynamically when executing tasks. While this design significantly enhances the intelligence and automation capability of the AI assistant, it also dramatically increases the number of LLM API calls. As a result, token consumption can be tens or even hundreds of times higher than that of traditional single-prompt AI agents. If you don't need to do complex tasks and have a GPU server or station such as Nvidia GB10 Spark or a gaming laptop with RTX-series 40-50XX graphics cards, you can link your OpenClaw to the open source LLM like `Qwen 3.5` or `DeepSeek‑R1` running on these local machine to save the costs especially when you have several OpenClaw Agents running on different device.
 
 #### 1.2 System Architecture
 
-The overall system follows a distributed agent + centralized inference architecture as shown below diagram. so it allows a single GPU server to support **multiple OpenClaw agents simultaneously**, forming a lightweight **AI agent cluster** while keeping hardware and cloud costs low.
+The overall system follows a distributed agent + centralized inference architecture as shown below diagram. so it allows a single GPU server to support multiple OpenClaw agents simultaneously, forming a lightweight AI agent cluster while keeping hardware and cloud costs low.
 
 ![](img/s_04.png)
 
@@ -53,7 +74,7 @@ To improve security and avoid directly exposing the LLM service to the public ne
 
 - The LLM API is not exposed directly to the network.
 - Only authenticated users with valid SSH accounts can access the model service
-- External users can connect through a gateway, router, or jump host
+- External users can connect through a gateway, router, or jump host.
 - Access control can be easily managed by enabling or disabling user accounts on the GPU server
 
 
@@ -78,12 +99,12 @@ curl -fsSL https://ollama.com/install.sh | sh
 
 After installation, verify that the service is working and start the service
 
-```
+```bash
 ollama --version
 ollama serve
 ```
 
-Ollama will expose a **local API endpoint** (default port `11434`) that OpenClaw agents can later connect to.
+Ollama will expose a local API endpoint (localhost default port `11434`) that OpenClaw agents can later connect to.
 
 #### 2.2 Pull OpenClaw Compatible Open-Source Models
 
@@ -108,21 +129,21 @@ You can also browse compatible models directly from the Ollama model repository.
 
 #### 2.3 Downloading the LLM Model
 
-In this experiment, the GPU server is equipped with **RTX 3060** and **RTX A5000** GPUs. Therefore, two models were selected:
+In this experiment, the GPU server is equipped with RTX 3060 and A5000 GPUs. Therefore, two models were selected:
 
 - **Qwen3.5-35B-A3B-FP8** for high-quality reasoning
 - **DeepSeek-R1-Tool-Calling-14B** for lightweight tool-calling tasks
 
-Pull and run the Qwen3.5-35B-A3B-FP8
+Pull and run the Qwen3.5-35B-A3B-FP8 with below cmds:
 
-```
+```bash
 ollama pull qwen3.5:35b
 ollama run qwen3.5:35b
 ```
 
-Pull and run the deepseek-r1-tool-calling:14b model:
+Pull and run the deepseek-r1-tool-calling:14b model with below cmds:
 
-```
+```bash
 ollama pull MFDoom/deepseek-r1-tool-calling:14b
 ollama run deepseek-r1-tool-calling:14b
 ```
@@ -131,9 +152,9 @@ Once the models are downloaded, Ollama will automatically load them when they ar
 
 #### 2.4 Running the Model as a Background Service(optional)
 
-After installation, the Ollama service typically runs in the background. When an API request is sent to the Ollama endpoint, the required model will automatically be loaded into GPU memory.  The first API request may take longer because the model must be initialized. To reduce this latency, you can configure the model to run as a **persistent service**.
+After installation, the Ollama service typically runs in the background. When an API request is sent to the Ollama endpoint, the required model will automatically be loaded into GPU memory. The first API request may take longer because the model must be initialized. To reduce this latency, you can configure the model to run as a persistent service.
 
-On Linux systems, a simple **systemd service** can be created to keep the model loaded, as example is shown below:
+On Linux systems, a simple systemd service can be created to keep the model loaded, as example is shown below:
 
 ```bash
 [Unit]
@@ -151,9 +172,9 @@ StandardError=null
 WantedBy=multi-user.target
 ```
 
-The copy the file `ollamaQwen35B_service.service` to the `/etc/systemd/system` director and start the service: 
+Then copy the file `ollamaQwen35B_service.service` to the `/etc/systemd/system` director and start the service: 
 
-```
+```bash
 sudo systemctl start ollamaQwen35B_service
 ```
 
@@ -169,13 +190,13 @@ All the configurations in this section should be performed on the computer or la
 
 Instead of exposing the Ollama API directly to the network (which may introduce security risks), we can use SSH port forwarding to securely tunnel the service to the local machine, so the OpenClaw agent running on a user’s laptop or workstation can interact with the LLM service as if it were running locally.
 
-For security and access control, it is recommended to create a **dedicated user account** on the GPU server that will only be used for forwarding the LLM service traffic, for example I create a normal user `llmService` on the GPU. 
+For security and access control, it is recommended to create a dedicated user account on the GPU server that will only be used for forwarding the LLM service traffic, for example I create a normal user `llmService` on the GPU. 
 
 #### 3.1 Create an SSH Port Forwarding Tunnel
 
-On the **target computer or laptop** where OpenClaw will run, execute the following SSH command to create a tunnel between the local machine and the GPU server.
+On the target computer or laptop where OpenClaw will run, execute the following SSH command to create a tunnel between the local machine and the GPU server.
 
-If both machines are located in the **same subnet or internal network**, run:
+If both machines are located in the same subnet or internal network, run:
 
 ```bash
 ssh -L localhost:11434:localhost:11434 llmService@<GPU_Server_IP_Address>
@@ -195,15 +216,15 @@ GPU Server:       localhost:11434 (Ollama API)
 
 Once the SSH tunnel is established, you can verify the connection by sending a test request to the Ollama API.
 
-Linux / macOS
+Linux / macOS:
 
-```
+```bash
 curl http://localhost:11434/api/chat -d "{\"model\":\"qwen3.5:9b\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello!\"}]}"
 ```
 
-Windows PowerShell
+Windows PowerShell:
 
-```
+```bash
 curl.exe http://localhost:11434/api/chat -d '{"model":"qwen3.5:9b","messages":[{"role":"user","content":"Hello!"}]}'
 ```
 
@@ -213,11 +234,11 @@ If the connection is working correctly, the API will return a JSON response gene
 
 #### 3.4 Connecting Through a Jump Host (Optional)
 
-In some environments, the GPU server may reside inside a **restricted internal network** and cannot be accessed directly from the user’s computer. In this case, a **jump host (bastion server)** can be used to relay the SSH connection.
+In some environments, the GPU server may reside inside a restricted internal network and cannot be accessed directly from the user’s computer. In this case, a jump host (bastion server) can be used to relay the SSH connection.
 
 On the target computer, run the following command:
 
-```
+```bash
 ssh -L localhost:11434:localhost:11434 -J <jumphostUser>@<Jump_Host_IP> llmService@<GPU_Server_Ip_Address>
 ```
 
@@ -235,7 +256,7 @@ GPU Server (Ollama LLM Service)
 
 Once the tunnel is established, the Ollama service will still be accessible locally via:
 
-```
+```html
 http://localhost:11434
 ```
 
@@ -247,20 +268,20 @@ http://localhost:11434
 
 All the configurations in this section should be performed on the computer or laptop where the OpenClaw agent will be installed.
 
-#### 4.1 Install Node.js
+#### 4.1 Install Dependence Node.js 
 
-OpenClaw requires Node.js version 22 or above. Therefore, the first step is to install Node.js on the user computer. Download the installer from the official website: https://nodejs.org/en/download
+OpenClaw requires `Node.js` version 22 or above. Therefore, the first step is to install Node.js on the user computer/laptop. Download the installer from the official website: https://nodejs.org/en/download
 
-Install the appropriate package based on your operating system (Windows, Linux, or macOS) and after installation, verify that Node.js is correctly installed:
+Install the appropriate package based on your operating system (Windows, Linux, or macOS) and after installation verify that Node.js is correctly installed:
 
 ```bash
 node -v
 npm -v
 ```
 
-#### 4.2 Install OpenClaw
+#### 4.2 Install OpenClaw AI Assistants 
 
-Next, install **OpenClaw** by following the official installation guide: https://docs.openclaw.ai/start/getting-started
+Next, install OpenClaw by following the official installation guide: https://docs.openclaw.ai/start/getting-started
 
 For Linux, macOS, or WSL environments, the installation can be performed using the following command:
 
@@ -268,11 +289,13 @@ For Linux, macOS, or WSL environments, the installation can be performed using t
 curl -fsSL https://openclaw.ai/install.sh | bash
 ```
 
-#### 4.3 Skip OpenClaw Cloud Model Configuration
+#### 4.3 Skip the OpenClaw Cloud Model Configuration
 
-During installation, OpenClaw will ask whether you want to configure model providers or external service integrations for the skills. As the deployment uses a locally hosted LLM via Ollama, these cloud-based configurations can be skipped. Example installation prompts:
+During installation, OpenClaw will ask whether you want to configure model providers or external service integrations for the skills. As the deployment uses a locally hosted LLM via Ollama, these cloud-based configurations can be skipped. 
 
-```
+Example installation configuration:
+
+```json
 ◇  Configure skills now? (recommended)
 │  Yes
 │
@@ -310,7 +333,7 @@ Next, modify the OpenClaw configuration file so that it uses the Ollama service 
 
 Edit the configuration file:
 
-```
+```bash
 ~/.openclaw/openclaw.json
 ```
 
@@ -391,7 +414,7 @@ The system will generate a dashboard URL containing an authentication token as s
 │  https://docs.openclaw.ai/web/control-ui  
 ```
 
-Open this URL in your browser to access the OpenClaw web interface.
+Open this URL in your browser to access the OpenClaw web interface with the token:
 
 ```
 http://127.0.0.1:18789/#token=<your_token>
@@ -411,7 +434,7 @@ If the "health indicator" at the top of the dashboard shows green, the system is
 
 #### 4.5 Optional: Integrating OpenClaw with Telegram
 
-To control OpenClaw remotely, you can integrate it with **Telegram**.
+To control OpenClaw remotely, you can integrate it with Telegram.
 
 First, open Telegram and start a chat with `@BotFather` ,  Run `/newbot` (or `/mybots`)  and Copy the token (looks like 123456:ABC...)  as shown below:
 
@@ -431,7 +454,7 @@ And in your OpenClaw server you will see your message is pending for approval as
 
 To approve the connection, run the following commands on the OpenClaw host:
 
-```
+```bash
 openclaw pairing list telegram
 openclaw pairing approve telegram <YOUR_PAIRING_CODE>
 ```
@@ -440,15 +463,19 @@ After approving the pairing code, the Telegram bot will be able to communicate w
 
 ![](img/s_11.png)
 
-
-
-After completing these steps, the OpenClaw agent running on the user’s computer will be connected to the **GPU-hosted LLM service** and can be controlled through the web dashboard or Telegram.
+After completing these steps, the OpenClaw agent running on the user’s computer will be connected to the GPU-hosted LLM service and can be controlled through the web dashboard or Telegram.
 
 ------
 
-### 5. Summery And Reference: 
+### 5. Summery And Reference
 
+#### 5.1 Summary 
 
+![](img/title.png)
+
+Implementing a distributed OpenClaw AI assistant cluster with locally hosted LLMs demonstrates a viable and cost‑effective alternative to cloud‑based AI services. By leveraging a GPU‑enabled server as a centralized inference engine and Ollama as the model runtime, multiple agent nodes can securely access powerful open‑source models like Qwen3.5‑35B or DeepSeek‑R1‑14B through SSH port forwarding—without exposing the service directly to the network.
+
+This architecture not only eliminates recurring API token costs but also gives users full control over their data and model selection. The step‑by‑step guide shows that even consumer‑grade hardware (such as a gaming laptop with an RTX GPU) can support a small cluster of AI assistants, making advanced agent capabilities accessible to individuals and small teams. Integration with platforms like Telegram further extends the system's practicality, enabling remote task execution and interaction.
 
 #### 5.2 Reference
 
