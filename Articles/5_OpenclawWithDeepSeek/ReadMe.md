@@ -97,7 +97,7 @@ For most Linux systems, the installation can be completed using:
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-After installation, verify that the service is working and start the service
+After installation, verify that the service is working and start the service : 
 
 ```bash
 ollama --version
