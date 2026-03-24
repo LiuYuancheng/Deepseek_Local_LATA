@@ -480,18 +480,12 @@ This architecture not only eliminates recurring API token costs but also gives u
 #### 5.2 Reference
 
 - https://blog.csdn.net/u010026928/article/details/158582591
-
 - https://www.nvidia.com/en-sg/products/workstations/dgx-spark/
-
 - https://news.hubeidaily.net/pc/c_5240661.html
-
 - https://www.pingwest.com/w/311980
-
 - https://xueqiu.com/5680323216/377215813
-
 - https://www.bilibili.com/video/BV1vdwczDEoR/?spm_id_from=333.1007.tianma.2-1-4.click&vd_source=5ff50dfdd1613df97004d3548592e433
-
-
+- https://vstecspromo.com/dellgb10?li_fat_id=f0a7ebb8-5f88-4c0c-b860-efa5af5eb282
 
 ------
 
