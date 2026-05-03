@@ -13,3 +13,7 @@ In this year a lot of company force stuff must use or integrate AI assistant for
 As most of action and under the real time monitoring of the ai assistant, the AI assistant will "learn" the user's action as input and user's decision to improve the output and finally distill the action into one skill file. 
 
 F
+
+https://www.bilibili.com/video/BV198XfBHEmB/?spm_id_from=333.1007.tianma.1-2-2.click&vd_source=5ff50dfdd1613df97004d3548592e433
+
+https://www.bilibili.com/video/BV1FX9MBtETd/?spm_id_from=333.1007.tianma.2-3-6.click&vd_source=5ff50dfdd1613df97004d3548592e433
