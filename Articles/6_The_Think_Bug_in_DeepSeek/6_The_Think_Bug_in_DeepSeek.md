@@ -1,10 +1,12 @@
 # **The Special Token** `<think>` Problem/Bug of Latest DeepSeek LLM 
 
-**Project Design Purpose** : This article will introduce a recent problem/bug people found when using the latest version Deepseek if you send the word ` <think>` or  `<think` there will be very high chance the model will generate very bad AI Hallucination and also show some experiment I tried to verify the problem and some guess about this bug from security view. This article will includes 3 part of section: 
+Recently user observed an issue/bug in the latest version of the DeepSeek LLM: during testing, it was found that when specific incomplete or special tokens such as `<think>` or `<think` are included in the user prompt, the model may produce highly unstable responses, severe hallucinations, abnormal reasoning outputs, or unexpected behavior.
 
-- Introduce and Replicate the `<think>` tag bug/problem. 
-- Introduce the design setup and result of verification experiment I did. 
-- Some guess based on the experiment and discussion. 
+The purpose of this article is to document the issue, demonstrate how the behavior can be reproduced, and discuss the verification experiments conducted to better understand the possible cause of the problem. This article is organized into three main sections:
+
+- **Introduction and Replication of the `<think>` Token Problem** : A walkthrough of the discovered issue, including example prompts and observed abnormal model behaviors.
+- **Verification Experiment Design and Result Analysis**: Introduction of the local verification experiment setup, testing methodology, collected outputs, and analysis of the verification results.
+- **Discussion and Some Assumptions** :  Discussion and assumptions related to tokenizer behavior, prompt parsing mechanisms, and potential security implications.
 
 ```python
 # Author:      Yuancheng Liu
@@ -22,57 +24,166 @@
 
 ### 1. Bug Introduction and Replication
 
-#### 1.1 Bug Introduction 
+#### 1.1 Bug Introduction
 
-Three days ago in 16/06/2026, some people found when they are using the new Deepseek LLM model (V3), if you send the word `<think>` or `<think`, there will be high possibility the model will random give you some information and the user's request information which you never asked before. As the questions a reasonable, some people think it may caused by the GPU load balancer's cache is not clear so you can see other people's question and consider as private data leakage,  some people think it is just a simple bug in the API's tokenizer. 
+Around three days ago (16/05/2026), multiple users reported abnormal behavior when interacting with the DeepSeek LLM model web chat. During testing, users found that if the prompt only contained the special token `<think>` or the incomplete token `<think`, the model could unexpectedly generate unrelated responses, hidden reasoning traces, or answer questions that were never asked by the current user.
+
+In several cases, the generated content appeared to be logically structured and contextually meaningful .Because some of the responses looked like fragments of valid user queries, online discussions quickly raised concerns regarding possible cross-session data leakage or inference cache exposure.
+
+At the time of discovery, several possible explanations were discussed by the community:
+
+- **GPU cache or load balancer cache leakage** : Some users suspected that the inference server cache was not being properly cleared between requests, potentially causing fragments of other users’ prompts or reasoning traces to appear in unrelated sessions.
+- **Tokenizer or prompt parser bug** : Others believed the issue was related to the tokenizer or internal prompt formatting mechanism, where the `<think>` token may accidentally trigger hidden reasoning-mode behavior or special internal instructions.
+- **Special token parsing issue** : Another assumption was that `<think>` might be treated as a reserved control token used internally by the model during chain-of-thought generation, causing unstable outputs when directly exposed to user input.
+
+
 
 #### 1.2 Bug Replication
 
-The bug is very easy to replicate, for the setting we use the official deepseek web with the setting: 
+The bug is relatively easy to reproduce. In this experiment, the official DeepSeek web interface was used with the following configuration:
 
-- Model type: V4-instant 
-- Online search function: disabled
-- Deep think function: enabled 
+- **Online Search Function:** Disabled
+- **Deep Think Function:** Enabled
+
+The testing method was straightforward: the input prompt only contained the text `<think>` and the returned result was recorded. Seven independent test rounds were conducted using separate chat sessions without any conversation history or contextual prompts.
 
 Now we send the word `<think>` and check the answer and we test several around (seven individual chat without any context)
 
-**Test 01** :  As shown below, the model detected the question correct and give the correct answer
+**1.2.1 Test 01 [no bug]**
+
+As shown below, the model correctly interpreted the input and returned a normal explanation of the `<think>` token.
 
 ![](img/s_02.png)
 
+**1.2.2 Test 02 [bug appeared]**
 
-
-**Test 02** :  As shown below, when we send the question again, we can see the model is answering some thing un-related and if we turn on the thinking progress we can see it is trying to answer the question "How to draw a cube?"  which I never asked it before
+In this round, the model generated a completely unrelated response. When the reasoning trace was expanded, it showed that the model was attempting to answer the question *“How to draw a cube?”*, even though this question had never been asked in the current session.
 
 ![](img/s_03.png)
 
+**1.2.3 Test 03 [no bug]**
 
-
-Test 03 :  As shown below, when we send the question again,  we can see this around the model detect the  word `<think>` as one system prompt which is correct. 
+In this test, the model treated the `<think>` token as a system-level instruction or reserved keyword, which is a more reasonable and expected behavior.
 
 ![](img/s_04.png)
 
+**1.2.4 Test 04 [bug appeared]** 
 
+In this round, the model unexpectedly attempted to answer the mathematical question:
 
-**Test 04** : In this round , we can see the model is trying to answer a question "Is it true that all n-dimensional vector spaces over a field F are isomorphic to the space of n-tuples F^n?" as shown below:
+> “Is it true that all n-dimensional vector spaces over a field F are isomorphic to the space of n-tuples F^n?”
+
+The generated content was unrelated to the user input.
 
 ![](img/s_05.png)
 
-Test 05: In this round, the module is trying to answer a question  "There is an additional constraint: the a_j are distinct positive integers."(as shown below) it seems it is part of the additional question of a request. 
+**1.2.5 Test 05 [bug appeared]**
+
+In this round, the model generated the sentence:
+
+> “There is an additional constraint: the aja_jaj are distinct positive integers.”
+
+The output appeared to be a fragment/part  extracted from a larger mathematical or algorithm-related prompt (as shown below)
 
 ![](img/s_07.png)
 
-Test 06 : In this round the answer is also correct and reasonable, the model shows it need to activate thing as ready for answer user's question. 
+**1.2.6 Test 06 [no bug]**
+
+This round produced a relatively normal and reasonable response. The model indicated that it was preparing its reasoning process before answering the user request.
 
 ![](img/s_06.png)
 
-Test 07: In this round, the module try to answer a question ""We have a dataset of numbers representing the number of messages sent per day by a user. Define a function calculate_limits(mean, std_dev) that returns the lower and upper bounds of the acceptable range based on the 68-95-99.7 rule." as create a python program as shown below:
+**1.2.7 Test 07 [bug appeared]**
+
+In the final round, the model attempted to answer an unrelated programming question ""We have a dataset of numbers representing the number of messages sent per day by a user. Define a function calculate_limits(mean, std_dev) that returns the lower and upper bounds of the acceptable range based on the 68-95-99.7 rule.", and even started generating Python code automatically as shown below:
 
 ![](img/s_08.png)
 
-Based on the seven test there will be high possibility (4/7) that the model will answer some un-related questions.
+Based on the seven independent tests, (4/7) sessions generated unrelated or abnormal responses. This indicates a relatively high probability that the `<think>` token can trigger unstable model behavior under the tested configuration.
 
 
+
+#### 1.3 Official Explanation and Initial Discussion
+
+Today 19/05/2026, the official DeepSeek account released an explanation (“关于 `<think>` 字符触发模型异常回复的说明”). According to the official explanation, the issue was caused by a special token triggering abnormal hallucination behavior inside the model, and the company stated that there was no evidence of private information leakage.(As shown below)
+
+![](img/s_09.png)
+
+Although the official explanation attributes the problem to hallucination triggered by special tokens, an important question still remains:
+
+> If the abnormal behavior is purely caused by tokenizer or model-level hallucination, would the same issue also appear in a completely isolated local deployment of the DeepSeek model running on a standalone GPU server without shared inference infrastructure?
+
+To further investigate this possibility, additional verification experiments were conducted using locally deployed DeepSeek models.
+
+
+
+------
+
+### 2. Verification Experiment Setup and Result 
+
+Based on the deepseek's official explanation, the Hallucination is triggered by the special token. So If I setup the DeepSeek LLM on one local GPU, I should repeat the bug by sending the special token to the model. 
+
+#### 2.1 Experiment Platform
+
+The test machine is a GB10 DGX-Spark with 128GB Share Memory, so I try to run the highest DeepSeek model 32B version. 
+
+#### 2.2 Experiment Program
+
+Then I create a simple program to do the experiment to show the result:
+
+```python
+from ollama import chat
+for i in range(10):
+    print("Test Around %s" %str(i))
+    response = chat(
+        model='deepseek-r1:32b',
+        messages=[{'role': 'user', 'content': '<think>'}],
+        think=True,
+    )
+    print('Thinking:\n', response.message.thinking)
+    print("Response from Model:")
+    print(response.message.content)
+```
+
+#### 2.3 Experiment Result
+
+Now when I run the program several times 
+
+**2.3.1 Execution Round 01**
+
+![](img/s_10.png)
+
+![](img/s_11.png)
+
+You can see all the 10 question are related to the think word and the model can distinguish the special token `<think> ` correctly. 
+
+**2.3.2 Execution Round 02**
+
+Now we run next round
+
+![](img/s_12.png)
+
+You can see in this round the model distinguished or ignored the special token `<think> ` correctly in every test. So it show the question incomplete or unclear. 
+
+**2.3.2 Execution Round 03**
+
+![](img/s_13.png)
+
+![](img/s_14.png)
+
+You can see in this round the model also distinguished or ignored the special token `<think> ` correctly in every test. So it show the question incomplete or unclear. 
+
+Based on the 30 test result, it is very different to replicate the bug scenario which happened in the deep seek web service on the (on the current platform and model I used). I also ran another 30 round and haven't see the bug happened yet. 
+
+
+
+------
+
+### 3. Guess and Discussion
+
+As some people declared that they can repeat the bug locally, so I guess not all the model 's ' Hallucination can be triggered by the special token. Or if the Hallucination random answer shows any time information which older than the model released time, we can say there may be some information lockage ? 
+
+Discussion about the special token attack base on this case. 
 
 
 
