@@ -10,7 +10,7 @@ The purpose of this article is to document the issue, demonstrate how the behavi
 
 ```python
 # Author:      Yuancheng Liu
-# Created:     2026/05/19
+# Created:     2026/05/18
 # Version:     v_0.0.2
 # Copyright:   Copyright (c) 2026 LiuYuancheng
 # License:     MIT License
@@ -119,17 +119,28 @@ To further investigate this possibility, additional verification experiments wer
 
 ------
 
-### 2. Verification Experiment Setup and Result 
+### 2. Verification Experiment Setup and Result
 
-Based on the deepseek's official explanation, the Hallucination is triggered by the special token. So If I setup the DeepSeek LLM on one local GPU, I should repeat the bug by sending the special token to the model. 
+Based on DeepSeek’s official explanation, the abnormal behavior is caused by hallucination triggered by a special token. If this explanation is correct, then I guess the same behavior should also be reproducible on a completely isolated local deployment of the DeepSeek model running on a standalone GPU server without any shared cloud inference infrastructure or request cache system.
 
 #### 2.1 Experiment Platform
 
-The test machine is a GB10 DGX-Spark with 128GB Share Memory, so I try to run the highest DeepSeek model 32B version. 
+The experiment platform used in this test was an NVIDIA GB10 DGX-Spark AI workstation with 128 GB shared memory. The hardware resources were sufficient to locally deploy and run the larger DeepSeek-R1 32B model through Ollama.
+
+The experiment environment included:
+
+- **Hardware Platform:** NVIDIA GB10 DGX-Spark
+- **LLM Framework:** Ollama
+- **Model Used:** `deepseek-r1:32b`
+- **Execution Mode:** Fully local inference without external API access
+
+The main objective of the experiment was to determine whether the `<think>` token alone could consistently trigger the same abnormal hallucination behavior observed in the official DeepSeek web service.
 
 #### 2.2 Experiment Program
 
-Then I create a simple program to do the experiment to show the result:
+A simple Python test program was created to repeatedly send the `<think>` token to the locally deployed model and record both the reasoning trace and final response.
+
+The experiment code is shown below:
 
 ```python
 from ollama import chat
@@ -147,7 +158,7 @@ for i in range(10):
 
 #### 2.3 Experiment Result
 
-Now when I run the program several times 
+The experiment was executed multiple times to observe whether the abnormal behavior could be reproduced under a fully local deployment environment.
 
 **2.3.1 Execution Round 01**
 
@@ -155,25 +166,45 @@ Now when I run the program several times
 
 ![](img/s_11.png)
 
-You can see all the 10 question are related to the think word and the model can distinguish the special token `<think> ` correctly. 
+In the first execution round, all ten responses were directly related to the `<think>` token itself. The model consistently identified the token as either a special keyword, formatting tag, or incomplete instruction.
+
+No unrelated questions, hidden prompts, or abnormal reasoning traces were observed during this round.
+
+The responses showed that the model correctly interpreted or safely handled the `<think>` token without generating random hallucinated content.
 
 **2.3.2 Execution Round 02**
 
-Now we run next round
+The experiment was then repeated using the same configuration and input.
 
 ![](img/s_12.png)
 
-You can see in this round the model distinguished or ignored the special token `<think> ` correctly in every test. So it show the question incomplete or unclear. 
+In this round, the model again correctly handled the `<think>` token in all test cases. Most responses indicated that the input was incomplete, unclear, or insufficient to generate a meaningful answer.
 
-**2.3.2 Execution Round 03**
+The model either ignored the token safely or treated it as a formatting-related placeholder rather than generating unrelated responses.
+
+No abnormal outputs similar to those observed in the DeepSeek web service were reproduced.
+
+**2.3.3 Execution Round 03**
+
+The experiment was repeated for a third round.
 
 ![](img/s_13.png)
 
 ![](img/s_14.png)
 
-You can see in this round the model also distinguished or ignored the special token `<think> ` correctly in every test. So it show the question incomplete or unclear. 
+Similar to the previous rounds, the model consistently handled the `<think>` token correctly. The generated responses remained stable and contextually reasonable throughout all test iterations.
 
-Based on the 30 test result, it is very different to replicate the bug scenario which happened in the deep seek web service on the (on the current platform and model I used). I also ran another 30 round and haven't see the bug happened yet. 
+Again, there were no cases where the model unexpectedly generated unrelated mathematical questions, programming tasks, or hidden reasoning traces from other contexts.
+
+
+
+#### 2.4 Initial Observation and Discussion
+
+Based on the first 30 test cases, the locally deployed DeepSeek-R1 32B model did not reproduce the abnormal behavior observed in the official DeepSeek web service.
+
+Additional experiment rounds (another 30 tests) were also conducted afterward, and the same issue still could not be reproduced under the current experimental environment.
+
+
 
 
 
@@ -181,14 +212,24 @@ Based on the 30 test result, it is very different to replicate the bug scenario 
 
 ### 3. Guess and Discussion
 
-As some people declared that they can repeat the bug locally, so I guess not all the model 's ' Hallucination can be triggered by the special token. Or if the Hallucination random answer shows any time information which older than the model released time, we can say there may be some information lockage ? 
+Based on the experiment results and online discussions, the exact cause of the `<think>` token issue is still not 100% confirm. Although DeepSeek officially explained that the abnormal behavior was caused by hallucination triggered by a special token, the verification results from different users appear inconsistent.
 
-Discussion about the special token attack base on this case. 
+Some people mentioned that they were able to reproduce similar abnormal outputs even in locally deployed environments, while other tests — including the experiment described in this article — failed to reproduce the issue under standalone GPU execution. This suggests that the problem may not be caused by a single factor alone.
+
+One important discussion point is the nature of the hallucinated content itself. If the generated “random” answers contain information, events, or references that are newer than the model’s original training cutoff or release timeline ( as we already ), then the issue becomes more complicated. In that scenario, it raises questions about whether the responses are purely hallucinations generated by the model, or whether some form of unintended information exposure or context leakage may exist within the inference infrastructure.
+
+At the current stage, there is still no public evidence proving actual cross-user private data leakage. However, this case highlights several important security concerns related to modern LLM systems:
+
+- Hidden or reserved special tokens may unintentionally expose internal reasoning mechanisms.
+- Improper prompt parsing may allow users to trigger unstable model states.
+- Shared inference infrastructure may increase the risk of context contamination between requests.
+- Reasoning-mode models may expose hidden chain-of-thought processing behavior when special tokens are injected.
+- Frontend prompt formatting and backend inference pipelines may behave differently from standalone local deployments.
+
+From an LLM security perspective, this case can also be viewed as a form of **special token attack** or **prompt-state manipulation attack**, where carefully crafted tokens attempt to interfere with the model’s internal reasoning or control flow. Even if no real data leakage exists, unstable hidden-state behavior itself can still become a security risk because it may expose internal prompts, hidden reasoning structures, or unintended model behaviors.
 
 
 
+------
 
-
-
-
-https://www.bilibili.com/video/BV1tZLE6gEK2/?spm_id_from=333.1007.tianma.1-2-2.click&vd_source=5ff50dfdd1613df97004d3548592e433
+> 
