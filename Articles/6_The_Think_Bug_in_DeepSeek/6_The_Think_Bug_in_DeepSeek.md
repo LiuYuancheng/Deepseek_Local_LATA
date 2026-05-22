@@ -1,5 +1,7 @@
 # The Special Token `<think>` Problem/Bug of Latest DeepSeek LLM 
 
+**us English** | [cn 中文](6_The_Think_Bug_in_DeepSeek_CN.md)
+
 Recently the users observed an issue/bug in the latest version of the DeepSeek LLM: during testing, it was found that when specific incomplete or special tokens such as `<think>` or `<think` are included in the user prompt, the model may produce highly unstable responses, severe hallucinations, abnormal reasoning outputs, or unexpected behavior.
 
 ![](img/title.png)
