@@ -24,6 +24,18 @@ The purpose of this article is to document the issue, demonstrate how the behavi
 
 [TOC]
 
+- [The Special Token `<think>` Problem/Bug of Latest DeepSeek LLM](#the-special-token---think---problem-bug-of-latest-deepseek-llm)
+    + [1. Bug Introduction and Replication](#1-bug-introduction-and-replication)
+      - [1.1 Bug Introduction](#11-bug-introduction)
+      - [1.2 Bug Replication](#12-bug-replication)
+      - [1.3 Official Explanation and Initial Discussion](#13-official-explanation-and-initial-discussion)
+    + [2. Verification Experiment Setup and Result](#2-verification-experiment-setup-and-result)
+      - [2.1 Experiment Platform](#21-experiment-platform)
+      - [2.2 Experiment Program](#22-experiment-program)
+      - [2.3 Experiment Result](#23-experiment-result)
+      - [2.4 Initial Observation and Discussion](#24-initial-observation-and-discussion)
+    + [3. Guess and Discussion](#3-guess-and-discussion)
+
 ------
 
 ### 1. Bug Introduction and Replication
