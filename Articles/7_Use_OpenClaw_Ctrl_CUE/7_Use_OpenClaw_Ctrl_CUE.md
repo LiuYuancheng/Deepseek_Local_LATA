@@ -127,3 +127,79 @@ The verified results are then passed to the **Data Manager**, which stores the e
 
 ------
 
+### 3. Use AI Agent to Deploy and Configure CUE
+
+#### 3.1 AI Agent Skill File Detail
+
+In this section we provide 3 different skill file for the AI Agent. 
+
+- **SKILL.md** — the main agent-facing skill file to guide the agent to use the system: when to trigger, an Action-API quick reference organized by category, role→action presets (SOC analyst, network admin, IR, OT/ICS, helpdesk), the generation workflow, and explicit safety boundaries (benign-only, no real credentials/targets, no wiring in the malicious-module repo). Agent skill file link: https://github.com/LiuYuancheng/Cluster_User_Emulation_System/blob/main/src/AI_Agent/SKILL.md
+- **DEPLOYMENT.md** — The kill about install/run steps for the AI agent to deploy different module of the User Action Emulator per node and the Orchestrator (Scheduler Monitor Hub) centrally, including setup the system and create the`scheduleCfg.txt` template, multi-persona rollout, validation-before-scale steps, and a troubleshooting table. Agent skill file link: https://github.com/LiuYuancheng/Cluster_User_Emulation_System/blob/main/src/AI_Agent/DEPLOYMENT.md
+- **EXPLANATION.md** — The configuration file generation skill file: Guide the AI Agent to generate the three customized simulation playbook configuration files (`scheduleCfg.txt`, `scheduleProfile_<Name>.py`, `actorFunctions_<Name>.py`) based on the user's input. Agent Kill file link: https://github.com/LiuYuancheng/Cluster_User_Emulation_System/blob/main/src/AI_Agent/EXPLANATION.md
+
+Now we use the Openclaw as an example to show how to use AI agent help deploy and setup: 
+
+#### 3.2 Added the skill file and test 
+
+Now we create one "Cluster_User_Emulation_System" folder in the openclaw skill folder and copy the three skill file in the folder as shown below : 
+
+![](img/s_05.png)
+
+Then use command `openclaw gateway restart`  restart openclaw to reload the skill file. If you are using the old version of openclaw, you may need to add the skill path in the config file `~/.openclaw/openclaw.json`
+
+Then in the dashboard, we can check the skill is loaded to openclaw : 
+
+![](img/s_06.png)
+
+
+
+#### 3.3 Guide the AI Agent to Create the CUE playbook Profile
+
+After the Skill is ready we can guide the AI agent to create the user activities playbook profiles which introduced in the section 1.2, for the request we need to provide the simulated user's role, number of actions, whether it is a daily action , whether create the random action and the target to save the file such as the prompt below: 
+
+```
+Can you help me create a user playbook profile "scheduleProfile_InfraEngineer.py" to simulate a IT infra engineer activates who manage 20 GPU server in ip range (10.10.0.122 ~ 10.10.0.142) which have 10 action every day to check the servers health and the GPU usage. save the profile in the folder ~/files
+```
+
+Then you can see that the open claw can start to read the skill :
+
+![](img/s_07.png)
+
+The after a while, it will finished the task 
+
+![](img/s_08.png)
+
+With the 10 actions which a GPU IT infra manage engineer may do during his daily work:
+
+| Time        | Action Type        | Description                                        |
+| ----------- | ------------------ | -------------------------------------------------- |
+| 08:05       | System health scan | Local node metrics check                           |
+| 09:00       | Ping sweep (45min) | Connectivity check on all 21 GPU servers           |
+| 09:45       | Resource metrics   | Detailed CPU/mem/disk for first 5 nodes            |
+| 10:15       | SSH GPU checks     | Real-time utilization queries via nvidia-smi       |
+| 11:00       | Browser dashboard  | Open Grafana monitoring UI                         |
+| 11:20       | Baseline checks    | System diagnostics                                 |
+| 12:00-12:30 | Lunch break        | Human filler (local tool launch + typing activity) |
+| 13:00       | SSH batch checks   | Remaining servers (gpu-node-006 to -021)           |
+| 14:30       | Port audit         | Network service scan on cluster                    |
+| 15:00+      | End-of-day wrapup  | System diagnostics, config backups, email summary  |
+
+Now we can copy the 3 playbook file to any one of the node in your cyber exercise blue team cluster's CUE folder's `\src\actionScheduler` and update the monitor hub's IP address as shown below:
+
+```
+Own_ID = "InfraEngineer_001"
+OWN_IP = "10.10.0.122" # Engineer's node IP (one of the GPU servers used as admin workstation)
+HOST_PORT = 3001
+RPT_MD = True
+HUB_IP = "10.10.0.1" # Orchestrator hub IP (lab network address)
+HUB_PORT = 5000
+PROFILE = "scheduleProfile_InfraEngineer.py"
+```
+
+Then reboot the CUE in running in the node and in the Orchestrator we can check the InfraEngineer's daily task status. 
+
+
+
+------
+
+> Last edit by LiuYuancheng (liu_yuan_cheng@hotmail.com) at 15/07/2026, if you have any problem or find anu bug, please send me a message .
