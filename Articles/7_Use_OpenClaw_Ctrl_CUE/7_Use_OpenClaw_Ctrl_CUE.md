@@ -1,6 +1,8 @@
-# Use Open-Claw to Deploy and Monitor the Cluster User Activities Emulator for Cyber Exercises
+# Use Open-Claw to Deploy and Configure the Cluster User Activities Emulator for Cyber Exercises
 
 In the previous article ["Cluster User Emulation System (CUE Agent) for Automated Blue Team and Red Team Activities in Cyber Exercises"](https://www.linkedin.com/pulse/cluster-user-emulation-system-cue-agent-auto-blue-team-yuancheng-liu-vngtc) ,  I introduced the **Cluster User Emulation System (CUE)** which is a framework can be used to automatically generate realistic Blue Team and Red Team user activities for cyber exercises. By emulating the daily behavior of legitimate users as well as attacker operations, the system helps create more realistic and dynamic cyber range environments while significantly reducing the manual effort required from exercise operators.
+
+![](img/title.png)
 
 This article will introduce the details about how to use general-purpose AI agent (such as Open-Claw) to help the green team to configure and deploy the system in the cyber exercise. This article includes four main parts: 
 
@@ -127,45 +129,75 @@ The verified results are then passed to the **Data Manager**, which stores the e
 
 ------
 
-### 3. Use AI Agent to Deploy and Configure CUE
+### 3. Using an AI Agent to Deploy and Configure the CUE System
+
+To simplify the user profile creation and CUE deployment process, I create a collection of AI Agent Skill Files that general-purpose AI agents such as **Open-Claw** can use them to understand the CUE architecture, generate customized user activity playbooks, and automate software deployment across multiple machines. The following sections will demonstrate how Open-Claw can automatically generate simulation profiles and deploy the User Action Emulator. The main work flow is shown below: 
+
+![](img/s_10.png)
 
 #### 3.1 AI Agent Skill File Detail
 
-In this section we provide 3 different skill file for the AI Agent. 
+The CUE project provides three complementary skill files that extend the AI agent with knowledge about the system architecture, deployment procedures, and configuration generation.
 
-- **SKILL.md** — the main agent-facing skill file to guide the agent to use the system: when to trigger, an Action-API quick reference organized by category, role→action presets (SOC analyst, network admin, IR, OT/ICS, helpdesk), the generation workflow, and explicit safety boundaries (benign-only, no real credentials/targets, no wiring in the malicious-module repo). Agent skill file link: https://github.com/LiuYuancheng/Cluster_User_Emulation_System/blob/main/src/AI_Agent/SKILL.md
-- **DEPLOYMENT.md** — The kill about install/run steps for the AI agent to deploy different module of the User Action Emulator per node and the Orchestrator (Scheduler Monitor Hub) centrally, including setup the system and create the`scheduleCfg.txt` template, multi-persona rollout, validation-before-scale steps, and a troubleshooting table. Agent skill file link: https://github.com/LiuYuancheng/Cluster_User_Emulation_System/blob/main/src/AI_Agent/DEPLOYMENT.md
-- **EXPLANATION.md** — The configuration file generation skill file: Guide the AI Agent to generate the three customized simulation playbook configuration files (`scheduleCfg.txt`, `scheduleProfile_<Name>.py`, `actorFunctions_<Name>.py`) based on the user's input. Agent Kill file link: https://github.com/LiuYuancheng/Cluster_User_Emulation_System/blob/main/src/AI_Agent/EXPLANATION.md
+**3.1.1 SKILL.md**
 
-Now we use the Openclaw as an example to show how to use AI agent help deploy and setup: 
+- Purpose :  The main entry point for the AI agent explains when the skill should be activated, introduces the available Action APIs grouped by functionality, and provides several predefined user-role templates such as SOC Analyst, Network Administrator, Incident Responder, OT/ICS Engineer, and Helpdesk Operator.
+- Function : Introduce the CUE architecture to the AI agent, describe available Action APIs and Provide common user-role templates.
+- Agent Skill File: https://github.com/LiuYuancheng/Cluster_User_Emulation_System/blob/main/src/AI_Agent/SKILL.md
 
-#### 3.2 Added the skill file and test 
+**3.1.2 DEPLOYMENT.md**
 
-Now we create one "Cluster_User_Emulation_System" folder in the openclaw skill folder and copy the three skill file in the folder as shown below : 
+- Purpose :  Teaches the AI agent how to deploy the CUE software on both emulator nodes and the centralized Orchestrator server with installation procedures, configuration templates, validation steps and troubleshooting guidelines.
+- Function : Install User Action Emulator nodes, Deploy the Orchestrator and Monitor Hub, Generate `scheduleCfg.txt`, Validate deployment and Troubleshoot common deployment problems.
+- Agent Skill File: https://github.com/LiuYuancheng/Cluster_User_Emulation_System/blob/main/src/AI_Agent/DEPLOYMENT.md
+
+**3.1.3 EXPLANATION.md**
+
+- Purpose : Guide the AI agent automatically generating customized simulation configuration files based on natural language descriptions.
+- Function : Given a user's job role, working schedule, network environment, and activity requirements, the AI agent can generate all required CUE playbook files without requiring the operator to manually edit Python code.
+- Agent Skill File: https://github.com/LiuYuancheng/Cluster_User_Emulation_System/blob/main/src/AI_Agent/EXPLANATION.md
+
+#### 3.2 Loading the Skill Files into Open-Claw
+
+Now we use the Open-Claw as an example to show how to use AI agent to help do the deploy and setup work.
+
+First, create a new folder named **Cluster_User_Emulation_System** inside the Open-Claw skills directory and copy the three skill files into it, as illustrated below.
 
 ![](img/s_05.png)
 
-Then use command `openclaw gateway restart`  restart openclaw to reload the skill file. If you are using the old version of openclaw, you may need to add the skill path in the config file `~/.openclaw/openclaw.json`
+After copying the files, restart the Open-Claw Gateway to reload the newly installed skills.
 
-Then in the dashboard, we can check the skill is loaded to openclaw : 
+```
+openclaw gateway restart
+```
+
+For older versions of Open-Claw, the custom skill directory may also need to be added manually to the configuration file: `~/.openclaw/openclaw.json`
+
+Once Open-Claw has restarted, open the dashboard and verify that the **Cluster User Emulation System** skill has been successfully loaded as shown below:
 
 ![](img/s_06.png)
 
 
 
-#### 3.3 Guide the AI Agent to Create the CUE playbook Profile
+#### 3.3 Generating a User Activity Playbook
 
-After the Skill is ready we can guide the AI agent to create the user activities playbook profiles which introduced in the section 1.2, for the request we need to provide the simulated user's role, number of actions, whether it is a daily action , whether create the random action and the target to save the file such as the prompt below: 
+After installing the skill files, the AI agent can generate customized user activity playbooks using natural language prompts.
+
+The operator simply describes the simulated user's role together with several high-level requirements, including:`User role`, `Daily responsibilities`, `Number of scheduled activities`, `Whether to generate random background activities` and `Output directory`. 
+
+For example, the following prompt requests a playbook for an IT infrastructure engineer responsible for managing a GPU cluster.
 
 ```
-Can you help me create a user playbook profile "scheduleProfile_InfraEngineer.py" to simulate a IT infra engineer activates who manage 20 GPU server in ip range (10.10.0.122 ~ 10.10.0.142) which have 10 action every day to check the servers health and the GPU usage. save the profile in the folder ~/files
+Can you help me create a user playbook profile "scheduleProfile_InfraEngineer.py" to simulate an IT infrastructure engineer who manages 20 GPU servers in the IP range 10.10.0.122 ~ 10.10.0.142.
+
+The engineer should perform 10 activities every day to check server health and GPU utilization.Save the generated files into ~/files.
 ```
 
-Then you can see that the open claw can start to read the skill :
+Then you can see that the Open-Claw can start to read the skill and implement the profile and playbook:
 
 ![](img/s_07.png)
 
-The after a while, it will finished the task 
+Once the generation process completes, the AI agent produces three playbook files together with a realistic daily activity schedule as shown below : 
 
 ![](img/s_08.png)
 
@@ -184,7 +216,11 @@ With the 10 actions which a GPU IT infra manage engineer may do during his daily
 | 14:30       | Port audit         | Network service scan on cluster                    |
 | 15:00+      | End-of-day wrapup  | System diagnostics, config backups, email summary  |
 
-Now we can copy the 3 playbook file to any one of the node in your cyber exercise blue team cluster's CUE folder's `\src\actionScheduler` and update the monitor hub's IP address as shown below:
+After generation, copy the three generated files into the emulator's `src/actionScheduler` directory.
+
+![](img/s_09.png)
+
+Next, update the emulator configuration by modifying the Monitor Hub address and the assigned profile inside `scheduleCfg.txt`.
 
 ```
 Own_ID = "InfraEngineer_001"
@@ -196,9 +232,41 @@ HUB_PORT = 5000
 PROFILE = "scheduleProfile_InfraEngineer.py"
 ```
 
-Then reboot the CUE in running in the node and in the Orchestrator we can check the InfraEngineer's daily task status. 
+Then restart the User Action Emulator. The new profile is automatically loaded, and the Orchestrator dashboard immediately begins displaying the execution status of the simulated Infrastructure Engineer.
 
 
+
+#### 3.4 Deploying the User Action Emulator with an AI Agent
+
+Besides generating simulation profiles, Open-Claw can also automate the installation and validation of the User Action Emulator on remote machines.
+
+To perform a deployment, the AI agent requires SSH access to the target system. Once valid credentials are provided, it can remotely connect to the host, install the required software packages, copy the emulator files, configure the execution profile, and perform a post-installation verification.
+
+An example prompt is shown below.
+
+```
+Setup CUE in the target machine 10.10.1.111 via ssh 
+ssh user name : xxxxx
+ssh password: xxxxx
+After the installation is complete,run the profile Alice and verify that no execution errors are reported.
+```
+
+Using the deployment knowledge defined in **DEPLOYMENT.md**, Open-Claw performs the following tasks automatically:
+
+1. Connects to the target machine using SSH.
+2. Uploads the CUE installation package.
+3. Executes the installation script (`setup.bat` or equivalent).
+4. Generates and updates the `scheduleCfg.txt` configuration file.
+5. Copies the generated playbook files to the appropriate directory.
+6. Starts the User Action Emulator.
+7. Executes the specified user profile.
+8. Validates that the emulator starts successfully and reports its status to the Orchestrator.
+
+### 4. Conclusion
+
+![](img/title.png)
+
+The integration of Open-Claw with the CUE system represents a powerful step forward in the automation of cyber range management. By leveraging AI-generated skill files, operators can rapidly move from a high-level description of a user's role to a fully deployed, executing simulation. This workflow not only reduces the barrier to entry for complex cyber exercises but also provides a scalable framework for future automation. The ability to dynamically generate and deploy "digital personas" using conversational prompts transforms the CUE from a powerful tool into an agile and intelligent asset for any security training program.
 
 ------
 
