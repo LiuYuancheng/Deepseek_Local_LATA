@@ -1,20 +1,20 @@
 # Use Open-Claw to Deploy and Configure the Cluster User Activities Emulator for Cyber Exercises
 
-In the previous article ["Cluster User Emulation System (CUE Agent) for Automated Blue Team and Red Team Activities in Cyber Exercises"](https://www.linkedin.com/pulse/cluster-user-emulation-system-cue-agent-auto-blue-team-yuancheng-liu-vngtc) ,  I introduced the **Cluster User Emulation System (CUE)** which is a framework can be used to automatically generate realistic Blue Team and Red Team user activities for cyber exercises. By emulating the daily behavior of legitimate users as well as attacker operations, the system helps create more realistic and dynamic cyber range environments while significantly reducing the manual effort required from exercise operators.
+In the previous article ["Cluster User Emulation System (CUE Agent) for Automated Blue Team and Red Team Activities in Cyber Exercises"](https://www.linkedin.com/pulse/cluster-user-emulation-system-cue-agent-auto-blue-team-yuancheng-liu-vngtc) ,  I introduced the **Cluster User Emulation System (CUE)** and how to use this agent framework to automatically generate realistic Blue Team and Red Team user activities for cyber exercises. Such as emulating the daily behavior of legitimate users as well as attacker operations, which helps create more realistic and dynamic cyber range environments while significantly reducing the manual effort required from cyber drills Green Team operators.
 
 ![](img/title.png)
 
-This article will introduce the details about how to use general-purpose AI agent (such as Open-Claw) to help the green team to configure and deploy the system in the cyber exercise. This article includes four main parts: 
+This article will introduce the details about how to use general-purpose LLM-AI agent (such as Open-Claw) to help the green team to configure and deploy the system in the exercise infra cluster. This article includes four main parts: 
 
 - **Basic System Deployment** – Deploying the CUE system within a cyber exercise infrastructure, including the required components and network architecture.
 - **System Execution Workflow** – Show the execution process after deployed in the infra includes the communication flow and interactions between the System Orchestrator and distributed CUE agents during operation.
 - **AI-Assisted User Profile Generation** – Demonstrating how Open-Claw interprets API documentation to automatically generate realistic simulated user profiles and activity procedures.
-- **AI-Assisted Remote Deployment** – Explaining how Open-Claw remotely installs, configures, and manages CUE agents on target machines, enabling large-scale automated deployment with minimal operator intervention.
+- **AI-Assisted Remote Deployment** – Explaining how Open-Claw remotely installs, configures, and manages CUE agents on target machines, enabling automated deployment with minimal operator intervention.
 
 ```python
 # Author:      Yuancheng Liu
 # Created:     2026/07/16
-# Version:     v_0.0.1
+# Version:     v_0.0.2
 # Copyright:   Copyright (c) 2026 LiuYuancheng
 # License:     GNU Lesser General Public License v3.0
 ```
@@ -22,6 +22,23 @@ This article will introduce the details about how to use general-purpose AI agen
 **Table of Contents**
 
 [TOC]
+
+- [Use Open-Claw to Deploy and Configure the Cluster User Activities Emulator for Cyber Exercises](#use-open-claw-to-deploy-and-configure-the-cluster-user-activities-emulator-for-cyber-exercises)
+    + [1. System Deployment](#1-system-deployment)
+      - [1.1 Deploy Activities Modules Repository](#11-deploy-activities-modules-repository)
+      - [1.2 Deploy User Action Emulator](#12-deploy-user-action-emulator)
+      - [1.3 Deploy Orchestrator Web Server](#13-deploy-orchestrator-web-server)
+    + [2. System Execution Workflow](#2-system-execution-workflow)
+      - [2.1 Emulator Initialization](#21-emulator-initialization)
+      - [2.2 Multi-threaded Task Scheduling](#22-multi-threaded-task-scheduling)
+      - [2.3 Actor Execution](#23-actor-execution)
+      - [2.4 Result Collection and State Management](#24-result-collection-and-state-management)
+    + [3. Using an AI Agent to Deploy and Configure the CUE System](#3-using-an-ai-agent-to-deploy-and-configure-the-cue-system)
+      - [3.1 AI Agent Skill File Detail](#31-ai-agent-skill-file-detail)
+      - [3.2 Loading the Skill Files into Open-Claw](#32-loading-the-skill-files-into-open-claw)
+      - [3.3 Generating a User Activity Playbook](#33-generating-a-user-activity-playbook)
+      - [3.4 Deploying the User Action Emulator with an AI Agent](#34-deploying-the-user-action-emulator-with-an-ai-agent)
+    + [4. Conclusion](#4-conclusion)
 
 ------
 
@@ -33,9 +50,9 @@ The deployment network topology diagram is shown below:
 
 ![](img/s_03.png)
 
-The overall deployment process consists of the following steps:
+The overall deployment process includes the following steps:
 
-1. Deploy the Activities Generation Modules Repository either centrally or locally on each emulator node.
+1. Deploy the Activities Generation Modules Repository either centrally or locally on each CUE agent node.
 2. Install the User Action Emulator package on every endpoint that will simulate user activities.
 3. Configure each emulator with its execution profile, network settings, and Orchestrator connection parameters.
 4. Deploy the Orchestrator Web Server to provide centralized scheduling, monitoring, and management.
@@ -214,7 +231,7 @@ With the 10 actions which a GPU IT infra manage engineer may do during his daily
 | 12:00-12:30 | Lunch break        | Human filler (local tool launch + typing activity) |
 | 13:00       | SSH batch checks   | Remaining servers (gpu-node-006 to -021)           |
 | 14:30       | Port audit         | Network service scan on cluster                    |
-| 15:00+      | End-of-day wrapup  | System diagnostics, config backups, email summary  |
+| 15:00+      | End-of-day wrap-up | System diagnostics, config backups, email summary  |
 
 After generation, copy the three generated files into the emulator's `src/actionScheduler` directory.
 
